@@ -1,0 +1,23 @@
+# Format taken from a2
+
+# assignment
+doc.public
+doc.private
+checkers.zip
+
+# ocaml
+*.cmo
+*.cma
+*.cmi
+*.out
+*.cmx
+*.native
+*.byte
+_build
+
+# temporary files
+*.swp
+*~
+\#*\#
+.DS_Store
+
