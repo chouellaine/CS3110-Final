@@ -11,10 +11,9 @@ type t = {
 
 let new_game () = 
   {
-    pieces = [
-      R (1, 1); 
-      (* TODO: etc. *)
-    ];
+    pieces = [B (2,1);B (4,1);B (6,1);B (8,1);B (1,2);B (3,2);B (5,2);B (7,2);
+              B (2,3);B (4,3);B (6,3);B (8,3);R (1,6);R (3,6);R (5,6);R (7,6);
+              R (2,7);R (4,7);R (6,7);R (8,7);R (1,8);R (3,8);R (5,8);R (7,8)];
     turn = 1; 
   }
 
@@ -45,4 +44,24 @@ type result = Legal of t | Illegal
 let move st mv = 
   failwith("unimplemented")
 
+let rec piece_at coord pieces = 
+  match pieces with
+  | [] -> "  "
+  | (R c)::_ when c = coord -> " R"
+  | (B c)::_ when c = coord -> " B"
+  | (RK c)::_ when c = coord -> "RK"
+  | (BK c)::_ when c = coord -> "BK"
+  | _::t -> piece_at coord t
+
+let print_board pieces = 
+  for i=1 to 8 do
+    print_string "---------------------------------\n";
+    for k=1 to 8 do
+      print_string "|";
+      print_string (piece_at (k,i) pieces);
+      print_string " ";
+    done;
+    print_string "|\n";
+  done;
+  print_string "---------------------------------\n";
 
