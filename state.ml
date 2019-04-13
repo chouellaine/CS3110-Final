@@ -53,6 +53,15 @@ let rec piece_at coord pieces =
   | (BK c)::_ when c = coord -> Some (BK c)
   | _::t -> piece_at coord t
 
+let rec piece_at coord pieces = 
+  match pieces with
+  | [] -> None
+  | (R c)::_ when c = coord -> Some (R c)
+  | (B c)::_ when c = coord -> Some (B c)
+  | (RK c)::_ when c = coord -> Some (RK c)
+  | (BK c)::_ when c = coord -> Some (BK c)
+  | _::t -> piece_at coord t
+
 let print_row coords subrow piece=
   begin
     match (coords,subrow,piece) with
@@ -73,20 +82,20 @@ let print_row coords subrow piece=
       ANSITerminal.print_string [Background White] "    ";
       ANSITerminal.print_string [Background Black] "/  ";
     | _, 2, Some R c | _, 2, Some RK c
-      -> ANSITerminal.print_string [Background Black;Foreground Red] "  /";
-      ANSITerminal.print_string [Background Red] "    ";
-      ANSITerminal.print_string [Background Black;Foreground Red] "\\  ";
+      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  /";
+      ANSITerminal.print_string [Background Magenta] "    ";
+      ANSITerminal.print_string [Background Black;Foreground Magenta] "\\  ";
     | _, 4, Some R c | _, 4, Some RK c
-      -> ANSITerminal.print_string [Background Black;Foreground Red] "  \\";
-      ANSITerminal.print_string [Background Red] "    ";
-      ANSITerminal.print_string [Background Black;Foreground Red] "/  ";
+      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
+      ANSITerminal.print_string [Background Magenta] "    ";
+      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
     | _, 3, Some B c | _, 3, Some BK c 
       -> ANSITerminal.print_string [Background Black] "  ";
       ANSITerminal.print_string [Background White] "      ";
       ANSITerminal.print_string [Background Black] "  ";
     | _, 3, Some R c | _, 3, Some RK c
       -> ANSITerminal.print_string [Background Black] "  ";
-      ANSITerminal.print_string [Background Red] "      ";
+      ANSITerminal.print_string [Background Magenta] "      ";
       ANSITerminal.print_string [Background Black] "  ";
       (*King's Crown*)
     | _, 1, Some BK (x,y)
@@ -94,9 +103,9 @@ let print_row coords subrow piece=
       ANSITerminal.print_string [Background Black;Underlined] "/\\/\\";
       ANSITerminal.print_string [Background Black] "/  ";
     | _, 1, Some RK (x,y) when (x+y) mod 2 = 1
-      -> ANSITerminal.print_string [Background Black;Foreground Red] "  \\";
-      ANSITerminal.print_string [Background Black;Foreground Red;Underlined] "/\\/\\";
-      ANSITerminal.print_string [Background Black;Foreground Red] "/  ";
+      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
+      ANSITerminal.print_string [Background Black;Foreground Magenta;Underlined] "/\\/\\";
+      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
     | _ -> failwith "idk"
   end
 
