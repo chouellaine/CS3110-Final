@@ -46,22 +46,69 @@ let move st mv =
 
 let rec piece_at coord pieces = 
   match pieces with
-  | [] -> "  "
-  | (R c)::_ when c = coord -> " R"
-  | (B c)::_ when c = coord -> " B"
-  | (RK c)::_ when c = coord -> "RK"
-  | (BK c)::_ when c = coord -> "BK"
+  | [] -> None
+  | (R c)::_ when c = coord -> Some (R c)
+  | (B c)::_ when c = coord -> Some (B c)
+  | (RK c)::_ when c = coord -> Some (RK c)
+  | (BK c)::_ when c = coord -> Some (BK c)
   | _::t -> piece_at coord t
 
+let print_row coords subrow piece=
+  begin
+    match (coords,subrow,piece) with
+    | (x,y),_,None | _, 1, Some R (x,y) |_, 1, Some B (x,y) 
+    | _, 5, Some R (x,y) | _, 5, Some B (x,y) 
+    | _, 5, Some RK (x,y) | _, 5, Some BK (x,y) when (x+y) mod 2 = 0 
+      -> ANSITerminal.print_string [Background Red] "          ";
+    | (x,y),_,None | _, 1, Some R (x,y) | _, 1, Some B (x,y) 
+    | _, 5, Some R (x,y) | _, 5, Some B (x,y)
+    | _, 5, Some RK (x,y) | _, 5, Some BK (x,y) when (x+y) mod 2 = 1 
+      -> ANSITerminal.print_string [Background Black] "          ";
+    | _, 2, Some B c | _, 2, Some BK c (* should never be on a red square *)
+      -> ANSITerminal.print_string [Background Black] "  /";
+      ANSITerminal.print_string [Background White] "    ";
+      ANSITerminal.print_string [Background Black] "\\  ";
+    | _, 4, Some B c | _, 4, Some BK c 
+      -> ANSITerminal.print_string [Background Black] "  \\";
+      ANSITerminal.print_string [Background White] "    ";
+      ANSITerminal.print_string [Background Black] "/  ";
+    | _, 2, Some R c | _, 2, Some RK c
+      -> ANSITerminal.print_string [Background Black;Foreground Red] "  /";
+      ANSITerminal.print_string [Background Red] "    ";
+      ANSITerminal.print_string [Background Black;Foreground Red] "\\  ";
+    | _, 4, Some R c | _, 4, Some RK c
+      -> ANSITerminal.print_string [Background Black;Foreground Red] "  \\";
+      ANSITerminal.print_string [Background Red] "    ";
+      ANSITerminal.print_string [Background Black;Foreground Red] "/  ";
+    | _, 3, Some B c | _, 3, Some BK c 
+      -> ANSITerminal.print_string [Background Black] "  ";
+      ANSITerminal.print_string [Background White] "      ";
+      ANSITerminal.print_string [Background Black] "  ";
+    | _, 3, Some R c | _, 3, Some RK c
+      -> ANSITerminal.print_string [Background Black] "  ";
+      ANSITerminal.print_string [Background Red] "      ";
+      ANSITerminal.print_string [Background Black] "  ";
+      (*King's Crown*)
+    | _, 1, Some BK (x,y)
+      -> ANSITerminal.print_string [Background Black] "  \\";
+      ANSITerminal.print_string [Background Black;Underlined] "/\\/\\";
+      ANSITerminal.print_string [Background Black] "/  ";
+    | _, 1, Some RK (x,y) when (x+y) mod 2 = 1
+      -> ANSITerminal.print_string [Background Black;Foreground Red] "  \\";
+      ANSITerminal.print_string [Background Black;Foreground Red;Underlined] "/\\/\\";
+      ANSITerminal.print_string [Background Black;Foreground Red] "/  ";
+    | _ -> failwith "idk"
+  end
+
+
+
 let print_board pieces = 
-  for i=1 to 8 do
-    print_string "---------------------------------\n";
-    for k=1 to 8 do
-      print_string "|";
-      print_string (piece_at (k,i) pieces);
-      print_string " ";
-    done;
-    print_string "|\n";
-  done;
-  print_string "---------------------------------\n";
+  for col=1 to 8 do
+    for subrow=1 to 5 do
+      for row=1 to 8 do
+        print_row (col,row) subrow (piece_at (row,col) pieces);
+      done;
+      print_string "\n"
+    done
+  done
 
