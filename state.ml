@@ -82,8 +82,7 @@ let rec piece_at coord pieces =
 let print_prompt = 
   failwith "unimplemented"
 
-(*** [print_row] Prints the board to terminal *)
-let print_row coords subrow piece =
+let print_row coords subrow piece=
   begin
     match (coords,subrow,piece) with
     | (x,y),_,None | _, 1, Some R (x,y) |_, 1, Some B (x,y) 
@@ -94,30 +93,30 @@ let print_row coords subrow piece =
     | _, 5, Some R (x,y) | _, 5, Some B (x,y)
     | _, 5, Some RK (x,y) | _, 5, Some BK (x,y) when (x+y) mod 2 = 1 
       -> ANSITerminal.print_string [Background Black] "          ";
-    | _, 2, Some B c | _, 2, Some BK c (* should never be on a red square *)
+    | _, 2, Some B c
       -> ANSITerminal.print_string [Background Black] "  /";
       ANSITerminal.print_string [Background White] "    ";
       ANSITerminal.print_string [Background Black] "\\  ";
-    | _, 4, Some B c | _, 4, Some BK c 
-      -> ANSITerminal.print_string [Background Black] "  \\";
-      ANSITerminal.print_string [Background White] "    ";
-      ANSITerminal.print_string [Background Black] "/  ";
-    | _, 2, Some R c | _, 2, Some RK c
+    | _, 2, Some R c
       -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  /";
       ANSITerminal.print_string [Background Magenta] "    ";
       ANSITerminal.print_string [Background Black;Foreground Magenta] "\\  ";
-    | _, 4, Some R c | _, 4, Some RK c
-      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
-      ANSITerminal.print_string [Background Magenta] "    ";
-      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
-    | _, 3, Some B c | _, 3, Some BK c 
+    | _, 3, Some B c
       -> ANSITerminal.print_string [Background Black] "  ";
       ANSITerminal.print_string [Background White] "      ";
       ANSITerminal.print_string [Background Black] "  ";
-    | _, 3, Some R c | _, 3, Some RK c
+    | _, 3, Some R c 
       -> ANSITerminal.print_string [Background Black] "  ";
       ANSITerminal.print_string [Background Magenta] "      ";
       ANSITerminal.print_string [Background Black] "  ";
+    | _, 4, Some B c
+      -> ANSITerminal.print_string [Background Black] "  \\";
+      ANSITerminal.print_string [Background White] "    ";
+      ANSITerminal.print_string [Background Black] "/  ";
+    | _, 4, Some R c
+      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
+      ANSITerminal.print_string [Background Magenta] "    ";
+      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
       (*King's Crown*)
     | _, 1, Some BK (x,y)
       -> ANSITerminal.print_string [Background Black] "  \\";
@@ -127,8 +126,35 @@ let print_row coords subrow piece =
       -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
       ANSITerminal.print_string [Background Black;Foreground Magenta;Underlined] "/\\/\\";
       ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
+      (*Extra fun*)
+    | _, 2, Some BK c
+      -> ANSITerminal.print_string [Background Black] "  /";
+      ANSITerminal.print_string [Background White; Foreground Red] "HIDE";
+      ANSITerminal.print_string [Background Black] "\\  ";
+    | _, 3, Some BK c 
+      -> ANSITerminal.print_string [Background Black] "  ";
+      ANSITerminal.print_string [Background White; Foreground Red] "  YO  ";
+      ANSITerminal.print_string [Background Black] "  ";
+    | _, 4, Some BK c 
+      -> ANSITerminal.print_string [Background Black] "  \\";
+      ANSITerminal.print_string [Background White; Foreground Red] "KIDS";
+      ANSITerminal.print_string [Background Black] "/  ";
+    | _, 2, Some RK c
+      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  /";
+      ANSITerminal.print_string [Background Magenta] "HIDE";
+      ANSITerminal.print_string [Background Black;Foreground Magenta] "\\  ";
+    | _, 3, Some RK c 
+      -> ANSITerminal.print_string [Background Black] "  ";
+      ANSITerminal.print_string [Background Magenta] "  YO  ";
+      ANSITerminal.print_string [Background Black] "  ";
+    | _, 4, Some RK c 
+      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
+      ANSITerminal.print_string [Background Magenta] "WIFE";
+      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
     | _ -> failwith "idk"
   end
+
+
 
 let print_board pieces = 
   for col=1 to 8 do
