@@ -1,31 +1,35 @@
-type piece = 
-  | R of (int * int) 
-  | B of (int * int) 
-  | RK of (int * int) 
-  | BK of (int * int)
+  type piece = 
+    | R of (int * int) 
+    | B of (int * int) 
+    | RK of (int * int) 
+    | BK of (int * int)
 
-(** The type representing the result of an attempted move. *)
-type result = Legal of t | Illegal
+  (** The type representing the result of an attempted move. *)
+  type result = Legal of t | Illegal
 
-(* If draw = 0 (player offers a draw) then next command 
-   must be either "accept draw"  or "reject draw."
-   If draw = 1 (player rejected the offered draw) then game continues as normal
-   If draw = 2 (player accepted the offered draw) then game over "
-   If draw is None, no draw was offered and game continues as normal. *)
-   type t = {
-   pieces: piece list;
-   turn: int; 
-   draw: int option; 
-   }
+  (** If draw = 0 (player offers a draw) then next command 
+  must be either "accept draw"  or "reject draw."
+  If draw = 1 (player rejected the offered draw) then game continues as normal
+  If draw = 2 (player accepted the offered draw) then game over "
+  If draw is None, no draw was offered and game continues as normal. *)`
+  type t = {
+  pieces: piece list;
+  turn: int; 
+  draw: int option; 
+  }
 
-   let new_game () = 
-   {
-    pieces = [B (2,1);B (4,1);B (6,1);B (8,1);B (1,2);B (3,2);B (5,2);B (7,2);
-              B (2,3);B (4,3);B (6,3);B (8,3);R (1,6);R (3,6);R (5,6);R (7,6);
-              R (2,7);R (4,7);R (6,7);R (8,7);R (1,8);R (3,8);R (5,8);R (7,8)];
-    turn = 1; 
-    draw = None; 
-   }
+  let new_game () = 
+  {
+  pieces = [B (2,1);B (4,1);B (6,1);B (8,1);B (1,2);B (3,2);B (5,2);B (7,2);
+            B (2,3);B (4,3);B (6,3);B (8,3);R (1,6);R (3,6);R (5,6);R (7,6);
+            R (2,7);R (4,7);R (6,7);R (8,7);R (1,8);R (3,8);R (5,8);R (7,8)];
+  turn = 1; 
+  draw = None; 
+  }
+
+    (*TODO *)
+    let get_draw = 
+    failwith("unimplemented")
 
    (** TODO 
    [get_moves st] is a list of legal moves given the currrent state. *)
@@ -47,8 +51,7 @@ type result = Legal of t | Illegal
    [move st mv] is the result of attempting to make the move specified by [mv]
     If the move is legal, then the result is [Legal st'] where [st'] is the 
     new state after taking the move [mv] in the state [st]. Otherwise, the 
-    result is [Illegal]
- *)
+    result is [Illegal] *)
    let move st mv = 
    failwith("unimplemented")
 
@@ -84,9 +87,15 @@ type result = Legal of t | Illegal
    (*** TODO
    To discuss: shouldn't printing to terminal be handled in main instead of
    in game? 
-   [print_commands] displays available commands for current game state, see
-     command.ml for Menu Levels*)
-   let print_commands = 
+   [print_prompt] displays the correct prompt and the available commands for 
+   current game state, see command.ml for Menu Levels.
+   Example: "Player 1 offered a draw, would you like to accept or reject?"
+   "Player 2 played (x1,y1) to (x2,y2). It is now Player 1's turn." 
+   "Both players have agreed on a draw, game over."
+   "Player 1 Won!" 
+   "50 move limit has been reached. Game Oh-vah", etc *)
+   
+   let print_prompt = 
    failwith "unimplemented"
 
    (*** [print_row] Prints the board to terminal *)
