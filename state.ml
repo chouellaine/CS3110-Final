@@ -139,15 +139,25 @@ let print_row coords subrow piece=
     | _ -> failwith "idk"
   end
 
-
-
 let print_board pieces = 
   for col=1 to 8 do
     for subrow=1 to 5 do
+      if subrow = 3
+      then begin print_string " "; print_int (9-col); print_string "  "; end
+      else print_string "    ";
       for row=1 to 8 do
         print_row (col,row) subrow (piece_at (row,col) pieces);
       done;
       print_string "\n"
-    done
-  done
+    done;
+  done;
+  print_string "\n    ";
+  print_string "    a     ";
+  print_string "    b     ";
+  print_string "    c     ";
+  print_string "    d     ";
+  print_string "    e     ";
+  print_string "    f     ";
+  print_string "    g     ";
+  print_string "    h     \n\n";
 
