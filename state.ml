@@ -3,8 +3,8 @@ type color =
   | Red
 
 type piece = 
-  | P of (color * int * int) 
-  | K of (color * int * int) 
+  | P of (color * (int * int)) 
+  | K of (color * (int * int)) 
 
 type t = {
   pieces: piece list;
@@ -17,12 +17,12 @@ type result = Legal of t | Illegal
 
 let new_game () = 
   {
-    pieces = [P (Red,1,1);P (Red,3,1);P (Red,5,1);P (Red,7,1);P (Red,2,2);
-              P (Red,4,2);P (Red,6,2);P (Red,8,2);P (Red,1,3);P (Red,3,3);
-              P (Red,5,3);P (Red,7,3);P (Red,2,8);P (Black,4,8);P (Black,6,8);
-              P (Black,8,8);P (Black,1,7);P (Black,3,7);P (Black,5,7);
-              P (Black,7,7);P (Black,2,6);P (Black,4,6);P (Black,6,6);
-              P (Black,8,6)];
+    pieces = [P (Red,(1,1));P (Red,(3,1));P (Red,(5,1));P (Red,(7,1));P (Red,(2,2));
+              P (Red,(4,2));P (Red,(6,2));P (Red,(8,2));P (Red,(1,3));P (Red,(3,3));
+              P (Red,(5,3));P (Red,(7,3));P (Red,(2,8));P (Black,(4,8));P (Black,(6,8));
+              P (Black,(8,8));P (Black,(1,7));P (Black,(3,7));P (Black,(5,7));
+              P (Black,(7,7));P (Black,(2,6));P (Black,(4,6));P (Black,(6,6));
+              P (Black,(8,6))];
     turn = 1; 
   }
 
@@ -37,6 +37,9 @@ let new_game () =
        "jump" command MUST only be jumping over opponent's pieces. *)
 let get_moves = 
   failwith("unimplemented")
+
+let check_win st = 
+  failwith "unimplemented"
 
 (** [set_score st points] gets the current number of black pieces minus the 
     current number of red pieces. *)
@@ -59,19 +62,19 @@ let rec piece_lst_helper mv acc =
   | h :: [] -> (first_coords::acc, h)
   | (x1,y1) :: (x2,y2) :: t -> 
     if abs (y2-y1) = 2 
-      then piece_lst_helper (x2,y2)::t ((x2+x1)/2, (y1+y2)/2)::acc 
+    then piece_lst_helper (x2,y2)::t ((x2+x1)/2, (y1+y2)/2)::acc 
     else piece_lst_helper (x2,y2)::t acc 
 
 
 (** [update_piece_list p_lst mv] is the new piece list after performing move [mv] 
     with piece list [piece_lst]. 
-    Requires: [mv] is a valid move. *))
+    Requires: [mv] is a valid move. *)
 let update_piece_list st piece_lst mv = 
   let (remove, final) = piece_lst_helper mv []
   in 
   if mod st.turn 2 = 0 then R final else B final
 
-  in new_piece :: updated_list
+in new_piece :: updated_list
 
 (** TODO 
     [move st mv] is the result of attempting to make the move(s) specified by [mv]
@@ -90,10 +93,8 @@ let move st mv =
 let rec piece_at coord pieces = 
   match pieces with
   | [] -> None
-  | (R c)::_ when c = coord -> Some (R c)
-  | (B c)::_ when c = coord -> Some (B c)
-  | (RK c)::_ when c = coord -> Some (RK c)
-  | (BK c)::_ when c = coord -> Some (BK c)
+  | (P (col, c))::_ when c = coord -> Some (P (col, c))
+  | (K (col, c))::_ when c = coord -> Some (K (col, c))
   | _::t -> piece_at coord t
 
 (*** TODO
@@ -113,69 +114,69 @@ let print_prompt =
 let print_row coords subrow piece=
   begin
     match (coords,subrow,piece) with
-    | (x,y),_,None | _, 1, Some R (x,y) |_, 1, Some B (x,y) 
-    | _, 5, Some R (x,y) | _, 5, Some B (x,y) 
-    | _, 5, Some RK (x,y) | _, 5, Some BK (x,y) when (x+y) mod 2 = 0 
+    | (x,y),_,None | _, 1, Some P (Red, (x,y)) |_, 1, Some P (Black, (x,y)) 
+    | _, 5, Some P (Red, (x,y)) | _, 5, Some P (Black, (x,y)) 
+    | _, 5, Some K (Red, (x,y)) | _, 5, Some K (Black, (x,y)) when (x+y) mod 2=1
       -> ANSITerminal.(print_string [on_red] "          ");
-    | (x,y),_,None | _, 1, Some R (x,y) | _, 1, Some B (x,y) 
-    | _, 5, Some R (x,y) | _, 5, Some B (x,y)
-    | _, 5, Some RK (x,y) | _, 5, Some BK (x,y) when (x+y) mod 2 = 1 
+    | (x,y),_,None | _, 1, Some P (Red, (x,y)) | _, 1, Some P (Black, (x,y)) 
+    | _, 5, Some P (Red, (x,y)) | _, 5, Some P (Black, (x,y))
+    | _, 5, Some K (Red, (x,y)) | _, 5, Some K (Black, (x,y)) when (x+y) mod 2=0 
       -> ANSITerminal.(print_string [on_black] "          ");
-    | _, 2, Some B c
+    | _, 2, Some P (Black, c)
       -> ANSITerminal.(print_string [on_black] "  /");
       ANSITerminal.(print_string [on_white] "    ");
       ANSITerminal.(print_string [on_black] "\\  ");
-    | _, 4, Some B c
+    | _, 4, Some P (Black, c)
       -> ANSITerminal.(print_string [on_black] "  \\");
       ANSITerminal.(print_string [on_white] "    ");
       ANSITerminal.(print_string [on_black] "/  ");
-    | _, 2, Some R c
+    | _, 2, Some P (Red, c)
       -> ANSITerminal.(print_string [on_black;magenta] "  /");
       ANSITerminal.(print_string [on_magenta] "    ");
       ANSITerminal.(print_string [on_black;magenta] "\\  ");
-    | _, 4, Some R c
+    | _, 4, Some P (Red, c)
       -> ANSITerminal.(print_string [on_black;magenta] "  \\");
       ANSITerminal.(print_string [on_magenta] "    ");
       ANSITerminal.(print_string [on_black;magenta] "/  ");
-    | _, 3, Some B c
+    | _, 3, Some P (Black, c)
       -> ANSITerminal.(print_string [on_black] "  ");
       ANSITerminal.(print_string [on_white] "      ");
       ANSITerminal.(print_string [on_black] "  ");
-    | _, 3, Some R c 
+    | _, 3, Some P (Red, c) 
       -> ANSITerminal.(print_string [on_black] "  ");
       ANSITerminal.(print_string [on_magenta] "      ");
       ANSITerminal.(print_string [on_black] "  ");
       (*King's Crown*)
-    | _, 1, Some BK (x,y)
+    | _, 1, Some K (Black, (x,y))
       -> ANSITerminal.(print_string [on_black] "  \\");
       ANSITerminal.(print_string [on_black;Underlined] "/\\/\\");
       ANSITerminal.(print_string [on_black] "/  ");
-    | _, 1, Some RK (x,y)
+    | _, 1, Some K (Red, (x,y))
       -> ANSITerminal.(print_string [on_black;magenta] "  \\");
       ANSITerminal.(print_string [on_black;magenta;Underlined] "/\\/\\");
       ANSITerminal.(print_string [on_black;magenta] "/  ");
       (*Extra fun*)
-    | _, 2, Some BK c
+    | _, 2, Some K (Black, c)
       -> ANSITerminal.(print_string [on_black] "  /");
       ANSITerminal.(print_string [on_white; red] "HIDE");
       ANSITerminal.(print_string [on_black] "\\  ");
-    | _, 3, Some BK c 
+    | _, 3, Some K (Black, c) 
       -> ANSITerminal.(print_string [on_black] "  ");
       ANSITerminal.(print_string [on_white; red] "  YO  ");
       ANSITerminal.(print_string [on_black] "  ");
-    | _, 4, Some BK c 
+    | _, 4, Some K (Black, c) 
       -> ANSITerminal.(print_string [on_black] "  \\");
       ANSITerminal.(print_string [on_white; red] "KIDS");
       ANSITerminal.(print_string [on_black] "/  ");
-    | _, 2, Some RK c
+    | _, 2, Some K (Red, c)
       -> ANSITerminal.(print_string [on_black;magenta] "  /");
       ANSITerminal.(print_string [on_magenta] "HIDE");
       ANSITerminal.(print_string [on_black;magenta] "\\  ");
-    | _, 3, Some RK c 
+    | _, 3, Some K (Red, c) 
       -> ANSITerminal.(print_string [on_black] "  ");
       ANSITerminal.(print_string [on_magenta] "  YO  ");
       ANSITerminal.(print_string [on_black] "  ");
-    | _, 4, Some RK c 
+    | _, 4, Some K (Red, c) 
       -> ANSITerminal.(print_string [on_black;magenta] "  \\");
       ANSITerminal.(print_string [on_magenta] "WIFE");
       ANSITerminal.(print_string [on_black;magenta] "/  ");
@@ -187,11 +188,12 @@ let print_row coords subrow piece=
 let print_board pieces = 
   for col=1 to 8 do
     for subrow=1 to 5 do
+      let col' = 9-col in
       if subrow = 3
-      then begin print_string " "; print_int (9-col); print_string "  "; end
+      then begin print_string " "; print_int (col'); print_string "  "; end
       else print_string "    ";
       for row=1 to 8 do
-        print_row (col,row) subrow (piece_at (row,col) pieces);
+        print_row (col',row) subrow (piece_at (row,col') pieces);
       done;
       print_string "\n"
     done;
@@ -205,4 +207,3 @@ let print_board pieces =
   print_string "    f     ";
   print_string "    g     ";
   print_string "    h     \n\n";
-

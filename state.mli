@@ -11,8 +11,8 @@ type color =
   | Red
 
 type piece = 
-  | P of (color * int * int) 
-  | K of (color * int * int) 
+  | P of (color * (int * int)) 
+  | K of (color * (int * int))
 
 (** The abstract type of values representing the game state. *)
 type t = {
