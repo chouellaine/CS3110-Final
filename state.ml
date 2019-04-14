@@ -114,18 +114,10 @@ let print_row coords subrow piece=
       -> ANSITerminal.print_string [Background Black] "  /";
       ANSITerminal.print_string [Background White] "    ";
       ANSITerminal.print_string [Background Black] "\\  ";
-    | _, 4, Some B c
-      -> ANSITerminal.print_string [Background Black] "  \\";
-      ANSITerminal.print_string [Background White] "    ";
-      ANSITerminal.print_string [Background Black] "/  ";
     | _, 2, Some R c
       -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  /";
       ANSITerminal.print_string [Background Magenta] "    ";
       ANSITerminal.print_string [Background Black;Foreground Magenta] "\\  ";
-    | _, 4, Some R c
-      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
-      ANSITerminal.print_string [Background Magenta] "    ";
-      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
     | _, 3, Some B c
       -> ANSITerminal.print_string [Background Black] "  ";
       ANSITerminal.print_string [Background White] "      ";
@@ -134,6 +126,14 @@ let print_row coords subrow piece=
       -> ANSITerminal.print_string [Background Black] "  ";
       ANSITerminal.print_string [Background Magenta] "      ";
       ANSITerminal.print_string [Background Black] "  ";
+    | _, 4, Some B c
+      -> ANSITerminal.print_string [Background Black] "  \\";
+      ANSITerminal.print_string [Background White] "    ";
+      ANSITerminal.print_string [Background Black] "/  ";
+    | _, 4, Some R c
+      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
+      ANSITerminal.print_string [Background Magenta] "    ";
+      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
       (*King's Crown*)
     | _, 1, Some BK (x,y)
       -> ANSITerminal.print_string [Background Black] "  \\";
