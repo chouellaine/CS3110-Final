@@ -74,6 +74,8 @@
      | h :: t  when h = "quit" -> raise Malformed 
      | _ :: _ -> raise Malformed 
 
+
+   (** [parse] SPECS *)
      let parse str =
      let split = String.split_on_char ' ' str in 
      let lst = List.rev (parse_rec split []) in 
