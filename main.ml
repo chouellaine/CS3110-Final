@@ -29,6 +29,8 @@ let check_end_game_condition st =
 
     - Terminating the process if the quit command is issued. 
 
+    - Ending game if a draw has been agreed upon 
+
     - Prompting the user again if an illegal move is made or an unrecognized 
       command is issued
 *)
