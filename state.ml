@@ -23,24 +23,95 @@ let new_game () =
       P (Black,(5,3));P (Black,(7,3));P (Red,(2,8));P (Red,(4,8));P (Red,(6,8));
       P (Red,(8,8));P (Red,(1,7));P (Red,(3,7));P (Red,(5,7));
       P (Red,(7,7));P (Red,(2,6));P (Red,(4,6));P (Red,(6,6));
-      P (Red,8,6)
+      P (Red,(8,6))
     ];
     turn = 1; 
   }
 
-let get_piece_moves piece piece_lst = 
-  
+(** [in bounds coords] is whether [coords] is in bounds of the board. *)
+let in_bounds coords = 
+  fst coords >= 1 && fst coords <= 8 && snd coords <= 8 && snd coords >= 1
+
+(** [get_color piece] returns the color of [piece]. *)
+let get_color = function
+  | K (color, _)
+  | P (color, _) -> color
+
+(** [get_color piece] returns the coordinates of [piece]. *)
+let get_coords = function
+  | K (_, coords)
+  | P (_, coords) -> coords
+
+(** [piece_at coords piece_lst] is an option, Some p where piece from 
+    [piece_lst] that has coordinates [coords] or None if no pieces match the 
+    coordinates [coords]. *)
+let rec piece_at coords piece_lst = 
+  match piece_lst with
+  | [] -> None
+  | ((P (_, coords')) as p):: t when coords = coords' -> Some p 
+  | ((K (_, coords')) as p):: t when coords = coords' -> Some p
+  | _ :: t -> piece_at coords t
+
+(** [get_normal_moves piece piece_lst] is a list of of moves that a piece
+    [piece] can take without jumping given piece list [piece_lst]. *)
+let get_normal_moves piece piece_lst = 
+  let helper start p_lst color = 
+    let ydif = if color = Red then ~-1 else 1 in 
+    let (x,y) = start in 
+    List.map (fun el -> [(x,y); el])
+      (List.filter (fun pos -> in_bounds pos && piece_at pos p_lst = None) 
+         [(x - 1, y + ydif); (x + 1, y + ydif)]) in
+  match piece with 
+  | P (color, (x,y)) -> helper (x,y) piece_lst color
+  | K (_, (x,y)) -> 
+    helper (x,y) piece_lst Red @ helper (x,y) piece_lst Black
+
+let taken_piece start dest color piece_lst taken = 
+  let in_between = ((fst start + fst dest) / 2, (snd start + snd dest)/2) in 
+  if in_bounds dest && (piece_at dest piece_lst) = None then 
+    match piece_at in_between piece_lst with
+    | None -> None
+    | Some piece when List.mem piece taken -> None
+    | Some piece -> if (get_color piece) <> color then (Some in_between) else None
+  else None
+
+let get_jump_paths piece piece_lst taken_pieces = 
+  let helper start p_lst color taken = 
+    let ydif = if color = Red then ~-2 else 2 in 
+    let (x,y) = start in 
+    (List.filter (fun pos -> (taken_piece start pos color p_lst taken) <> None) 
+       [(x - 2, y + ydif); (x + 2, y + ydif)]) in
+  match piece with 
+  | P (color, (x,y)) -> helper (x,y) piece_lst color taken_pieces
+  | K (_, (x,y)) -> 
+    helper (x,y) piece_lst Red taken_pieces @ 
+    helper (x,y) piece_lst Black taken_pieces 
+
+let get_jump_moves piece piece_lst = 
+  let rec helper piece p_lst curr_path taken cmp_paths = 
+    let c = get_color piece in 
+    match get_jump_paths piece p_lst taken with 
+    | [] -> curr_path::cmp_paths
+    | h1 :: t -> helper h1 c (curr_path@h1) updatedtaken cmp_paths
+  in 
+
+  get_jump_paths  
+
+    match piece with 
+    | P (color, (x,y)) -> helper (x,y) piece_lst color [] []
+    | K (_, (x,y)) -> helper (x,y) piece_lst Red [] [] @ helper (x,y) piece_lst Black [] []
+
 
 (** A move is valid if:
     - check if desired destination is empty 
     - if not a king, check if piece is moving diagonally (left/right) forward one spot 
-       AND if there are no available forward jumps to make 
+        AND if there are no available forward jumps to make 
     - if king, check if piece is moving diagonally (left/right) forward/backward one spot
-       AND if there are no availble forward/backward jumps to make 
+        AND if there are no availble forward/backward jumps to make 
     - check if player jumps over all possible pieces 
     - "move" command can also be interpreted as a "jump" command, but 
-       "jump" command MUST only be jumping over opponent's pieces. *)
-let get_st_moves st = 
+        "jump" command MUST only be jumping over opponent's pieces. *)
+let get_all_moves st = 
   failwith("unimplemented")
 
 (** [get_score st points] gets the current number of black pieces minus the 
@@ -52,17 +123,6 @@ let get_score st =
     | P (color, _)::t -> 
       if color = Black then helper (acc + 1) t else  helper (acc - 1) t
   in helper 0 st.pieces
-
-
-(** [piece_at coords piece_lst] is an option, Some p where piece from 
-    [piece_lst] that has coordinates [coords] or None if no pieces match the 
-    coordinates [coords]. *)
-let rec piece_at coords piece_lst = 
-  match piece_lst with
-  | [] -> None
-  | ((P (_, coords')) as p) :: t when coords = coords'
-  | ((K (_, coords')) as p) :: t when coords = coords' -> Some p
-  | _ :: t -> piece_at coords t
 
 (** [piece_lst_helper st mv] is the tuple of the list of piece coordinates to be 
     removed after performing move [mv] on state [st] with list of piece 
@@ -80,16 +140,6 @@ let rec piece_lst_helper mv acc =
     then piece_lst_helper (x2,y2)::t ((x2+x1)/2, (y1+y2)/2)::acc 
     else piece_lst_helper (x2,y2)::t acc 
 
-
-(** [get_color piece] returns the color of [piece]. *)
-let get_color = function
-  | K (color, _)
-  | P (color, _) -> color
-
-(** [get_color piece] returns the coordinates of [piece]. *)
-let get_coords = function
-  | K (_, coords)
-  | P (_, coords) -> coords
 
 (** [remove_pieces remove_lst piece_lst] is [piece_lst] without pieces that have
     coordinates in [remove_lst] .*)
@@ -109,12 +159,12 @@ let update_piece_list piece_lst mv =
   let my_piece = piece_at (List.hd mv) piece_lst in 
   let new_piece = 
     match my_piece with 
-      | None -> failwith("invalid move in update_piece_list")
-      | Some (K (color, _)) -> K (color,final_dest)
-      | Some (P (color, _)) -> 
-        if (snd final_dest = 8 && color = Black) 
-        || (snd final_dest = 1 && color = Red) then K (color, final_dest) 
-        else P(color, final_dest) in
+    | None -> failwith("invalid move in update_piece_list")
+    | Some (K (color, _)) -> K (color,final_dest)
+    | Some (P (color, _)) -> 
+      if (snd final_dest = 8 && color = Black) 
+      || (snd final_dest = 1 && color = Red) then K (color, final_dest) 
+      else P(color, final_dest) in
   let updated_list = remove_pieces remove_lst piece_lst in 
   new_piece :: updated_list
 
