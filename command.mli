@@ -26,7 +26,7 @@
     An [object_phrase] is not permitted to be the empty list. *)
 
 type action = (int*int) list
-
+type ptype = Player | AI 
 (** The type [command] represents a player command that is decomposed
     into a verb and possibly an action. *)
 type command = 
@@ -37,6 +37,7 @@ type command =
   | Moves
   | Accept
   | Reject
+  | Opponent of ptype
   | Move of action
 
 (** Raised when an empty command is parsed. *)
