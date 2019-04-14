@@ -6,11 +6,13 @@
    and functions that cause the state to change.
 *)
 
+type color = 
+  | Black
+  | Red
+
 type piece = 
-  | R of (int * int) 
-  | B of (int * int) 
-  | RK of (int * int) 
-  | BK of (int * int)
+  | P of (color * int * int) 
+  | K of (color * int * int) 
 
 (** The abstract type of values representing the game state. *)
 type t = {
@@ -23,10 +25,10 @@ type t = {
 val new_game : unit -> t
 
 (** [get_moves st] is a list of legal moves given the currrent state. *)
-val get_moves : t -> piece * (int * int list) list 
+val get_moves : t -> piece * ((int * int) list) list 
 
-(** [set_score st points] gets the current number of red pieces minus the 
-    current number of black pieces. *)
+(** [set_score st points] gets the current number of black pieces minus the 
+    current number of red pieces. *)
 val get_score : t -> int
 
 (** The type representing the result of an attempted move. *)
@@ -37,8 +39,12 @@ type result = Legal of t | Illegal
     new state after taking the move [mv] in the state [st]. Otherwise, the 
     result is [Illegal]
 *)
-val move : t -> piece * (int * int list) -> result
+val move : t -> piece * ((int * int) list) -> result
 
 (* [check_win st] is None if the game is still being played, Some 0 if Red 
    wins, and Some 1 if Black wins *)
 val check_win : t -> int option
+
+(** [print_board pieces] prints the board given by the list of pieces and their
+    coordinates given by [pieces]  *)
+val print_board : piece list -> unit
