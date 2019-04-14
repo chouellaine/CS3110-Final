@@ -50,23 +50,43 @@ exception Empty
 
 exception Malformed
 
-(** UPDATE 
-    [parse_rec] is the [lst] with all empty strings removed. *)
+(** [parse_rec] is the [lst] with all empty strings and substring "to" removed.
+    The substring "to" is case-insensitive. *)
 let rec parse_rec lst newlst = 
   match lst with
   | [] -> newlst  
-  | h :: t when h = "" ->  parse_rec t newlst
+  | h :: t when h = "" || String.lowercase_ascii h = "to" ->  parse_rec t newlst
   | h :: t -> parse_rec t (h :: newlst) 
 
-(** UPDATE
-    [read_cmd lst] is the appropriate [command] from the the user input.
+(** [convert_coord] is [c] in (x,y) coordinate format
+    Raises Malform if [c] is not within the board range. *)
+let convert_coord c = 
+  if String.length c > 2 then raise Malformed else 
+    match (Char.code (Char.lowercase_ascii c.[0]) ,Char.code (Char.lowercase_ascii c.[1])) with 
+    | x,y when x > 96 && x < 105 && y > 48 && y < 57 -> (x mod 96,y mod 48)
+    | _,_ -> raise Malformed
+
+(** [read_cmd lst] is the appropriate [command] from the the user input.
     Raises [Malformed] if the input is malformed. *) 
-let read_cmd lst =  
-  failwith("unimplemented")
+let read_cmd = function
+  | [] -> raise Malformed 
+  | h :: [] when String.lowercase_ascii h = "start" -> Start
+  | h :: [] when String.lowercase_ascii h = "quit" -> Quit
+  | h :: [] when String.lowercase_ascii h =  "score" -> Score
+  | h :: [] when String.lowercase_ascii h = "draw" -> Draw
+  | h :: [] when String.lowercase_ascii h = "moves" -> Moves
+  | h :: [] when String.lowercase_ascii h = "accept" -> Accept
+  | h :: [] when String.lowercase_ascii h = "reject" -> Reject
+  | h :: [] when String.lowercase_ascii h = "move" -> raise Malformed 
+  | h :: _ :: [] when String.lowercase_ascii h = "move" -> raise Malformed
+  | h :: t  when String.lowercase_ascii h = "move" -> Move (List.map convert_coord t)
+  | h :: [] when String.lowercase_ascii h = "jump" -> raise Malformed 
+  | h :: _ :: [] when String.lowercase_ascii h = "jump" -> raise Malformed
+  | h :: t  when String.lowercase_ascii h = "jump" -> Move (List.map convert_coord t)
+  | _ :: _ -> raise Malformed 
 
-
-
-(** [parse] SPECS *)
+(** [parse str] parses player's command into a command. 
+    Raise Empty if str is [] and Malformed if str is an invalid command. *)
 let parse str =
   let split = String.split_on_char ' ' str in 
   let lst = List.rev (parse_rec split []) in 
