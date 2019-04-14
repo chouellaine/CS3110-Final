@@ -25,8 +25,6 @@ let new_game () =
 let get_draw = 
   failwith("unimplemented")
 
-(** TODO 
-    [get_moves st] is a list of legal moves given the currrent state. *)
 let get_moves = 
   failwith("unimplemented")
 
@@ -47,15 +45,6 @@ let get_score st =
     new state after taking the move [mv] in the state [st]. Otherwise, the 
     result is [Illegal] *)
 let move st mv = 
-  failwith("unimplemented")
-
-(** TODO 
-    [draw st a] is the result of attempting to 
-    request, accept, or reject a draw (based on [a])
-    [a] is an int where 0 = offer, 1 = reject, 2 = accept 
-    If user command is legal, then the result is [Legal st'] and the game ends.  
-    Otherwise, the result is [Illegal] *) 
-let draw st a = 
   failwith("unimplemented")
 
 (** ADD SPEC *)
