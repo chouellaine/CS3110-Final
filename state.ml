@@ -21,10 +21,6 @@ let new_game () =
     turn = 1; 
   }
 
-(*TODO *)
-let get_draw = 
-  failwith("unimplemented")
-
 let get_moves = 
   failwith("unimplemented")
 
