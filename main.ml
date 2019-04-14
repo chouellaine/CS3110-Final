@@ -35,6 +35,12 @@ let check_end_game_condition st =
 let rec play_game () = 
   failwith("unimplemented")
 
+(** [helper_init p] initializes the initial state of a new game against 
+    player or AI [p]. 
+    [p] = 0 if player vs player and 1 if player vs AI *)
+let helper_init p =  
+  failwith("unimplemented")
+
 
 (** [main ()] prints the prompt for the game to play, then starts it. *)
 let main () =
