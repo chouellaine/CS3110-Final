@@ -52,13 +52,29 @@ exception Empty
 
 exception Malformed
 
-(** [parse_rec] is the [lst] with all empty strings and substring "to" removed.
+(** [move_parse is_to lst newlst] raises [Malformed] if the word "to" does not 
+    appear between board coordinates or if "to" appears at the end of the 
+    command. *)
+let rec move_parse is_to lst newlst =
+  match lst with
+  | [] -> newlst
+  | h::t when h = "" -> move_parse is_to t newlst
+  | h :: [] when h = "to" -> raise Malformed
+  | h :: t when h = "to" 
+    -> if is_to then move_parse false t newlst else raise Malformed
+  | h :: t when h <> "to"
+    -> if is_to then raise Malformed else move_parse true t (h::newlst)
+  | _ -> failwith "shouldn't get here"
+
+(** [parse_rec lst newlst] is the [lst] with all empty strings and substring "to" removed.
     The substring "to" is case-insensitive. *)
-let rec parse_rec lst newlst = 
+let parse_rec lst newlst =
   match lst with
   | [] -> newlst  
-  | h :: t when h = "" || String.lowercase_ascii h = "to" ->  parse_rec t newlst
-  | h :: t -> parse_rec t (h :: newlst) 
+  | h :: [] -> [h]
+  | h :: t when h <> "move" ->  raise Malformed
+  | h :: t when h = "move" -> move_parse false t []
+  | _ -> failwith "shouldn't get here"
 
 (** [convert_coord] is [c] in (x,y) coordinate format
     Raises Malform if [c] is not within the board range. *)
