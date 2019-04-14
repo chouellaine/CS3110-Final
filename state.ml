@@ -23,13 +23,14 @@ let new_game () =
       P (Black,(5,3));P (Black,(7,3));P (Red,(2,8));P (Red,(4,8));P (Red,(6,8));
       P (Red,(8,8));P (Red,(1,7));P (Red,(3,7));P (Red,(5,7));
       P (Red,(7,7));P (Red,(2,6));P (Red,(4,6));P (Red,(6,6));
-      P (Red,8,6)
+      P (Red,(8,6))
     ];
     turn = 1; 
   }
 
 let get_piece_moves piece piece_lst = 
-  
+  failwith ("unimplemented")
+
 
 (** A move is valid if:
     - check if desired destination is empty 
@@ -60,7 +61,7 @@ let get_score st =
 let rec piece_at coords piece_lst = 
   match piece_lst with
   | [] -> None
-  | ((P (_, coords')) as p) :: t when coords = coords'
+  | ((P (_, coords')) as p) :: t when coords = coords' -> Some p
   | ((K (_, coords')) as p) :: t when coords = coords' -> Some p
   | _ :: t -> piece_at coords t
 
@@ -109,12 +110,12 @@ let update_piece_list piece_lst mv =
   let my_piece = piece_at (List.hd mv) piece_lst in 
   let new_piece = 
     match my_piece with 
-      | None -> failwith("invalid move in update_piece_list")
-      | Some (K (color, _)) -> K (color,final_dest)
-      | Some (P (color, _)) -> 
-        if (snd final_dest = 8 && color = Black) 
-        || (snd final_dest = 1 && color = Red) then K (color, final_dest) 
-        else P(color, final_dest) in
+    | None -> failwith("invalid move in update_piece_list")
+    | Some (K (color, _)) -> K (color,final_dest)
+    | Some (P (color, _)) -> 
+      if (snd final_dest = 8 && color = Black) 
+      || (snd final_dest = 1 && color = Red) then K (color, final_dest) 
+      else P(color, final_dest) in
   let updated_list = remove_pieces remove_lst piece_lst in 
   new_piece :: updated_list
 
@@ -126,7 +127,7 @@ let update_piece_list piece_lst mv =
     Other functionalities: 
     - check if piece at can be crowned. *)
 let move st mv = 
-  if List.mem mv (get_moves st) then 
+  if true (*List.mem mv (get_moves st)*) then 
     let st' = {pieces = update_piece_list st.pieces mv; turn = st.turn + 1} in 
     Legal st'
   else Illegal 

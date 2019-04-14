@@ -45,8 +45,10 @@ let check_end_game_condition st =
       command is issued
 *)
 let rec play_game s = 
+  print_board s.pieces;
+  helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'";
   match parse (read_line ()) with 
-  | Moves -> (print get_moves s) play_game s
+  | Moves -> (*** (print get_moves s) *) helper_string "MOVES"; play_game s
   | Move m -> begin match move s m with 
       | Legal s' -> print_board s.pieces; play_game s'
       | Illegal -> helper_string "Illegal move. Try again."; play_game s
@@ -58,15 +60,6 @@ let rec play_game s =
       | Reject -> helper_string "Draw rejected."; play_game s
     end
   | _ -> failwith "something died"
-
-(** [helper_init p] initializes the initial state of a new game against 
-    player or AI [p]. 
-    [p] = 0 if player vs player and 1 if player vs AI *)
-let helper_init p =  
-  failwith("unimplemented")
-
-let menu_3 a = 
-  print_board a.pieces 
 
 let rec menu_2 a= 
   begin
@@ -98,7 +91,7 @@ let main () =
   menu_1 (parse(read_line())); 
   ANSITerminal.(print_string [red]
                   "\n\n Player vs Player or Player vs AI? 
-                    Please enter 'player'  or 'AI' to move forward. \n > \n");
+                    Please enter 'player' or 'AI' to move forward. \n > \n");
   let opp =  menu_2 (parse(read_line())) in 
   if opp = Player then (
     print_board (new_game ()).pieces;
