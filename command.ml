@@ -34,7 +34,7 @@
      Tell state to print the updated board state 
 *) 
 
-type action = (int*int) * (int*int)
+type action = (int*int) list 
 
 type command = 
   | Start
