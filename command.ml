@@ -7,7 +7,7 @@
 
      Menu Level 3 accepts commands: "Quit", "move","jump","offer draw",
      "accept draw","reject draw," "score"
-     Display: the board game, "Your commands are "move" ,"jump","offer draw", etc
+     Display: the board game, Your commands are "move" ,"jump","offer draw", etc
 
      Commands: "Quit", "Start","Player", "AI", "jump (x1,y1) to (x2,y2)", 
      "move (x1,y1) to (x2,y2)", "offer draw", "accept draw"," reject draw"
@@ -32,52 +32,43 @@
 
      Update move history (number of moves, score?) <-- potentially needed for AI? 
      Tell state to print the updated board state 
- *) 
+*) 
 
-    (* fst action = piece to be moved, snd action = end location of moved piece*)
-     type action = (int*int) * (int*int)
+type action = (int*int) * (int*int)
 
-     type command = 
-     | Start
-     | Quit 
-     | Score 
-     | Draw of int (* 0 = offer, 1 = reject, 2 = accept *) 
-     | Move of action
-     | Jump of action
+type command = 
+  | Start
+  | Quit 
+  | Score 
+  | Draw
+  | Moves
+  | Accept
+  | Reject
+  | Move of action
 
-     exception Empty
+exception Empty
 
-     exception Malformed
+exception Malformed
 
-     (** UPDATE 
-     [parse_rec] is the [lst] with all empty strings removed. *)
-     let rec parse_rec lst newlst = 
-     match lst with
-     | [] -> newlst  
-     | h :: t when h = "" ->  parse_rec t newlst
-     | h :: t -> parse_rec t (h :: newlst) 
+(** UPDATE 
+    [parse_rec] is the [lst] with all empty strings removed. *)
+let rec parse_rec lst newlst = 
+  match lst with
+  | [] -> newlst  
+  | h :: t when h = "" ->  parse_rec t newlst
+  | h :: t -> parse_rec t (h :: newlst) 
 
-     (** UPDATE
-     [read_cmd lst] is the appropriate [command] from the the user input.
-     Raises [Malformed] if the input is malformed. *) 
-     let read_cmd = function 
-     | [] -> raise Malformed 
-     | h :: [] when h = "quit" -> Quit
-     | h :: [] when h = "score" -> Score
-     | h :: [] when h = "inventory" -> Inventory
-     | h :: [] when h = "go" -> raise Malformed
-     | h :: [] when h = "take" -> raise Malformed
-     | h :: [] when h = "drop" -> raise Malformed
-     | h :: [] when h = "lock" -> raise Malformed
-     | h :: [] when h = "unlock" -> raise Malformed
-     | h :: t  when h = "score" -> raise Malformed 
-     | h :: t  when h = "quit" -> raise Malformed 
-     | _ :: _ -> raise Malformed 
+(** UPDATE
+    [read_cmd lst] is the appropriate [command] from the the user input.
+    Raises [Malformed] if the input is malformed. *) 
+let read_cmd lst =  
+  failwith("unimplemented")
 
 
-   (** [parse] SPECS *)
-     let parse str =
-     let split = String.split_on_char ' ' str in 
-     let lst = List.rev (parse_rec split []) in 
-     if lst = [] then raise Empty 
-     else read_cmd lst 
+
+(** [parse] SPECS *)
+let parse str =
+  let split = String.split_on_char ' ' str in 
+  let lst = List.rev (parse_rec split []) in 
+  if lst = [] then raise Empty 
+  else read_cmd lst 
