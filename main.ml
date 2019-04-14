@@ -47,6 +47,16 @@ let check_end_game_condition st =
 let rec play_game s = 
   match parse (read_line ()) with 
   | Moves -> (print get_moves s) play_game s
+  | Move m -> begin match move s m with 
+      | Legal s' -> print_board s.pieces; play_game s'
+      | Illegal -> helper_string "Illegal move. Try again."; play_game s
+    end
+  | Draw -> helper_string "A draw has been offered. Do you accept of reject?";
+    begin 
+      match parse(read_line ()) with
+      | Accept -> helper_string "Draw accepted. The game has been drawn";
+      | Reject -> helper_string "Draw rejected."; play_game s
+    end
   | _ -> failwith "something died"
 
 (** [helper_init p] initializes the initial state of a new game against 
@@ -55,24 +65,30 @@ let rec play_game s =
 let helper_init p =  
   failwith("unimplemented")
 
-let rec menu_2 a= 
-  match a with 
-  | exception Malformed  -> helper_string "Invalid Command. Try again.\n"; menu_2 (parse(read_line()));
-  | exception Empty -> helper_string "Empty Command. Try again.\n" ; menu_2 (parse(read_line())); 
-  | Opponent p -> p 
-  | Quit -> Pervasives.exit 0
-  | _ -> failwith "BUG!!!" 
-
 let menu_3 a = 
-  failwith("unimp")
+  print_board a.pieces 
+
+let rec menu_2 a= 
+  begin
+    match a with 
+    | exception Malformed  -> helper_string "Invalid Command. Try again.\n"; menu_2 (parse(read_line()));
+    | exception Empty -> helper_string "Empty Command. Try again.\n" ; menu_2 (parse(read_line())); 
+    | Opponent p -> p
+    | Quit -> helper_string "Quitting Game. \n"; Pervasives.exit 0
+    | Score | Draw | Moves | Accept | Reject | Start | Move _ 
+      -> helper_string "Invalid Command. Try again.\n"; menu_2 (parse(read_line()));
+  end
 
 let rec menu_1 a = 
-  match a with 
-  | exception Malformed  -> helper_string "Invalid Command. Try again.\n"; menu_1 (parse(read_line()));
-  | exception Empty -> helper_string "Empty Command. Try again.\n" ; menu_1 (parse(read_line())); 
-  | Start -> ()
-  | Quit -> Pervasives.exit 0
-  | _ -> failwith "BUG!!!" 
+  begin
+    match a with 
+    | exception Malformed  -> helper_string "Invalid Command. Try again.\n"; menu_1 (parse(read_line()));
+    | exception Empty -> helper_string "Empty Command. Try again.\n" ; menu_1 (parse(read_line())); 
+    | Start -> ()
+    | Quit ->  helper_string "Quitting Game. \n"; Pervasives.exit 0
+    | Score | Draw | Moves | Accept | Reject | Opponent _ | Move _ 
+      -> helper_string "Invalid Command. Try again.\n"; menu_1 (parse(read_line()));
+  end 
 
 (** [main ()] prints the prompt for the game to play, then starts it. *)
 let main () =
@@ -84,8 +100,9 @@ let main () =
                   "\n\n Player vs Player or Player vs AI? 
                     Please enter 'player'  or 'AI' to move forward. \n > \n");
   let opp =  menu_2 (parse(read_line())) in 
-  if opp = Player then 
-    menu_3 else failwith "AI version not implemented"
+  if opp = Player then (
+    print_board (new_game ()).pieces;
+    (play_game (new_game ()))) else failwith "AI version not implemented"
 
 (* Execute the game engine. *)
 let () = main ()

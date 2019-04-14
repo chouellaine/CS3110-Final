@@ -39,7 +39,7 @@ type result = Legal of t | Illegal
     new state after taking the move [mv] in the state [st]. Otherwise, the 
     result is [Illegal]
 *)
-val move : t -> piece * ((int * int) list) -> result
+val move : t -> (int * int) list -> result
 
 (* [check_win st] is None if the game is still being played, Some 0 if Red 
    wins, and Some 1 if Black wins *)
