@@ -11,8 +11,8 @@ type color =
   | Red
 
 type piece = 
-  | P of (color * int * int) 
-  | K of (color * int * int) 
+  | P of (color * (int * int)) 
+  | K of (color * (int * int)) 
 
 (** The abstract type of values representing the game state. *)
 type t = {
@@ -27,7 +27,7 @@ val new_game : unit -> t
 (** [get_moves st] is a list of legal moves given the currrent state. *)
 val get_moves : t -> piece * ((int * int) list) list 
 
-(** [set_score st points] gets the current number of black pieces minus the 
+(** [get_score st points] gets the current number of black pieces minus the 
     current number of red pieces. *)
 val get_score : t -> int
 
