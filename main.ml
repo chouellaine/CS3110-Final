@@ -34,21 +34,19 @@ let check_end_game_condition st =
     - Prompting the user again if an illegal move is made or an unrecognized 
       command is issued
 *)
-let rec play_game () = 
-  failwith("unimplemented")
-
-(** [helper_init p] initializes the initial state of a new game against 
-    player or AI [p]. 
-    [p] = 0 if player vs player and 1 if player vs AI *)
-let helper_init p =  
-  failwith("unimplemented")
-
+let rec play_game s = 
+  match parse (read_line ()) with 
+  | Moves -> (*print get_moves s*) play_game s
+  | _ -> failwith "something died"
 
 (** [main ()] prints the prompt for the game to play, then starts it. *)
 let main () =
   ANSITerminal.(print_string [red]
                   "\n\nWelcome to our checkers game.\n");
-  play_game ()
+  match parse (read_line ()) with 
+  | Start -> print_board (new_game ()).pieces; play_game (new_game ())
+  | Quit -> Pervasives.exit 0
+  | _ -> failwith "something went terribly wrong"
 
 (* Execute the game engine. *)
 let () = main ()
