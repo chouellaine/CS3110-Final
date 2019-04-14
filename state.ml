@@ -116,69 +116,69 @@ let print_row coords subrow piece=
     | (x,y),_,None | _, 1, Some R (x,y) |_, 1, Some B (x,y) 
     | _, 5, Some R (x,y) | _, 5, Some B (x,y) 
     | _, 5, Some RK (x,y) | _, 5, Some BK (x,y) when (x+y) mod 2 = 0 
-      -> ANSITerminal.print_string [Background Red] "          ";
+      -> ANSITerminal.(print_string [on_red] "          ");
     | (x,y),_,None | _, 1, Some R (x,y) | _, 1, Some B (x,y) 
     | _, 5, Some R (x,y) | _, 5, Some B (x,y)
     | _, 5, Some RK (x,y) | _, 5, Some BK (x,y) when (x+y) mod 2 = 1 
-      -> ANSITerminal.print_string [Background Black] "          ";
+      -> ANSITerminal.(print_string [on_black] "          ");
     | _, 2, Some B c
-      -> ANSITerminal.print_string [Background Black] "  /";
-      ANSITerminal.print_string [Background White] "    ";
-      ANSITerminal.print_string [Background Black] "\\  ";
-    | _, 2, Some R c
-      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  /";
-      ANSITerminal.print_string [Background Magenta] "    ";
-      ANSITerminal.print_string [Background Black;Foreground Magenta] "\\  ";
-    | _, 3, Some B c
-      -> ANSITerminal.print_string [Background Black] "  ";
-      ANSITerminal.print_string [Background White] "      ";
-      ANSITerminal.print_string [Background Black] "  ";
-    | _, 3, Some R c 
-      -> ANSITerminal.print_string [Background Black] "  ";
-      ANSITerminal.print_string [Background Magenta] "      ";
-      ANSITerminal.print_string [Background Black] "  ";
+      -> ANSITerminal.(print_string [on_black] "  /");
+      ANSITerminal.(print_string [on_white] "    ");
+      ANSITerminal.(print_string [on_black] "\\  ");
     | _, 4, Some B c
-      -> ANSITerminal.print_string [Background Black] "  \\";
-      ANSITerminal.print_string [Background White] "    ";
-      ANSITerminal.print_string [Background Black] "/  ";
+      -> ANSITerminal.(print_string [on_black] "  \\");
+      ANSITerminal.(print_string [on_white] "    ");
+      ANSITerminal.(print_string [on_black] "/  ");
+    | _, 2, Some R c
+      -> ANSITerminal.(print_string [on_black;magenta] "  /");
+      ANSITerminal.(print_string [on_magenta] "    ");
+      ANSITerminal.(print_string [on_black;magenta] "\\  ");
     | _, 4, Some R c
-      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
-      ANSITerminal.print_string [Background Magenta] "    ";
-      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
+      -> ANSITerminal.(print_string [on_black;magenta] "  \\");
+      ANSITerminal.(print_string [on_magenta] "    ");
+      ANSITerminal.(print_string [on_black;magenta] "/  ");
+    | _, 3, Some B c
+      -> ANSITerminal.(print_string [on_black] "  ");
+      ANSITerminal.(print_string [on_white] "      ");
+      ANSITerminal.(print_string [on_black] "  ");
+    | _, 3, Some R c 
+      -> ANSITerminal.(print_string [on_black] "  ");
+      ANSITerminal.(print_string [on_magenta] "      ");
+      ANSITerminal.(print_string [on_black] "  ");
       (*King's Crown*)
     | _, 1, Some BK (x,y)
-      -> ANSITerminal.print_string [Background Black] "  \\";
-      ANSITerminal.print_string [Background Black;Underlined] "/\\/\\";
-      ANSITerminal.print_string [Background Black] "/  ";
-    | _, 1, Some RK (x,y) when (x+y) mod 2 = 1
-      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
-      ANSITerminal.print_string [Background Black;Foreground Magenta;Underlined] "/\\/\\";
-      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
+      -> ANSITerminal.(print_string [on_black] "  \\");
+      ANSITerminal.(print_string [on_black;Underlined] "/\\/\\");
+      ANSITerminal.(print_string [on_black] "/  ");
+    | _, 1, Some RK (x,y)
+      -> ANSITerminal.(print_string [on_black;magenta] "  \\");
+      ANSITerminal.(print_string [on_black;magenta;Underlined] "/\\/\\");
+      ANSITerminal.(print_string [on_black;magenta] "/  ");
       (*Extra fun*)
     | _, 2, Some BK c
-      -> ANSITerminal.print_string [Background Black] "  /";
-      ANSITerminal.print_string [Background White; Foreground Red] "HIDE";
-      ANSITerminal.print_string [Background Black] "\\  ";
+      -> ANSITerminal.(print_string [on_black] "  /");
+      ANSITerminal.(print_string [on_white; red] "HIDE");
+      ANSITerminal.(print_string [on_black] "\\  ");
     | _, 3, Some BK c 
-      -> ANSITerminal.print_string [Background Black] "  ";
-      ANSITerminal.print_string [Background White; Foreground Red] "  YO  ";
-      ANSITerminal.print_string [Background Black] "  ";
+      -> ANSITerminal.(print_string [on_black] "  ");
+      ANSITerminal.(print_string [on_white; red] "  YO  ");
+      ANSITerminal.(print_string [on_black] "  ");
     | _, 4, Some BK c 
-      -> ANSITerminal.print_string [Background Black] "  \\";
-      ANSITerminal.print_string [Background White; Foreground Red] "KIDS";
-      ANSITerminal.print_string [Background Black] "/  ";
+      -> ANSITerminal.(print_string [on_black] "  \\");
+      ANSITerminal.(print_string [on_white; red] "KIDS");
+      ANSITerminal.(print_string [on_black] "/  ");
     | _, 2, Some RK c
-      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  /";
-      ANSITerminal.print_string [Background Magenta] "HIDE";
-      ANSITerminal.print_string [Background Black;Foreground Magenta] "\\  ";
+      -> ANSITerminal.(print_string [on_black;magenta] "  /");
+      ANSITerminal.(print_string [on_magenta] "HIDE");
+      ANSITerminal.(print_string [on_black;magenta] "\\  ");
     | _, 3, Some RK c 
-      -> ANSITerminal.print_string [Background Black] "  ";
-      ANSITerminal.print_string [Background Magenta] "  YO  ";
-      ANSITerminal.print_string [Background Black] "  ";
+      -> ANSITerminal.(print_string [on_black] "  ");
+      ANSITerminal.(print_string [on_magenta] "  YO  ");
+      ANSITerminal.(print_string [on_black] "  ");
     | _, 4, Some RK c 
-      -> ANSITerminal.print_string [Background Black;Foreground Magenta] "  \\";
-      ANSITerminal.print_string [Background Magenta] "WIFE";
-      ANSITerminal.print_string [Background Black;Foreground Magenta] "/  ";
+      -> ANSITerminal.(print_string [on_black;magenta] "  \\");
+      ANSITerminal.(print_string [on_magenta] "WIFE");
+      ANSITerminal.(print_string [on_black;magenta] "/  ");
     | _ -> failwith "idk"
   end
 
@@ -187,10 +187,22 @@ let print_row coords subrow piece=
 let print_board pieces = 
   for col=1 to 8 do
     for subrow=1 to 5 do
+      if subrow = 3
+      then begin print_string " "; print_int (9-col); print_string "  "; end
+      else print_string "    ";
       for row=1 to 8 do
         print_row (col,row) subrow (piece_at (row,col) pieces);
       done;
       print_string "\n"
-    done
-  done
+    done;
+  done;
+  print_string "\n    ";
+  print_string "    a     ";
+  print_string "    b     ";
+  print_string "    c     ";
+  print_string "    d     ";
+  print_string "    e     ";
+  print_string "    f     ";
+  print_string "    g     ";
+  print_string "    h     \n\n";
 

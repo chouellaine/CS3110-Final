@@ -46,3 +46,7 @@ val move : t -> piece * ((int * int) list) -> result
 (* [check_win st] is None if the game is still being played, Some 0 if Red 
    wins, and Some 1 if Black wins *)
 val check_win : t -> int option
+
+(** [print_board pieces] prints the board given by the list of pieces and their
+    coordinates given by [pieces]  *)
+val print_board : piece list -> unit
