@@ -35,6 +35,7 @@
 *) 
 
 type action = (int*int) list 
+type ptype = Player | AI 
 
 type command = 
   | Start
@@ -43,7 +44,8 @@ type command =
   | Draw
   | Moves
   | Accept
-  | Reject
+  | Reject 
+  | Opponent of ptype
   | Move of action
 
 exception Empty
@@ -71,12 +73,23 @@ let convert_coord c =
 let read_cmd = function
   | [] -> raise Malformed 
   | h :: [] when String.lowercase_ascii h = "start" -> Start
+  | h :: t when String.lowercase_ascii h = "start" -> raise Malformed
   | h :: [] when String.lowercase_ascii h = "quit" -> Quit
+  | h :: t when String.lowercase_ascii h = "quit" -> raise Malformed
   | h :: [] when String.lowercase_ascii h =  "score" -> Score
+  | h :: t when String.lowercase_ascii h = "score" -> raise Malformed
   | h :: [] when String.lowercase_ascii h = "draw" -> Draw
+  | h :: t when String.lowercase_ascii h = "draw" -> raise Malformed
   | h :: [] when String.lowercase_ascii h = "moves" -> Moves
+  | h :: t when String.lowercase_ascii h = "moves" -> raise Malformed
   | h :: [] when String.lowercase_ascii h = "accept" -> Accept
+  | h :: t when String.lowercase_ascii h = "accept" -> raise Malformed
   | h :: [] when String.lowercase_ascii h = "reject" -> Reject
+  | h :: t when String.lowercase_ascii h = "reject" -> raise Malformed
+  | h :: [] when String.lowercase_ascii h = "player" -> Opponent (Player)
+  | h :: t when String.lowercase_ascii h = "player" -> raise Malformed
+  | h :: [] when String.lowercase_ascii h = "ai" -> Opponent (AI)
+  | h :: t when String.lowercase_ascii h = "ai" -> raise Malformed
   | h :: [] when String.lowercase_ascii h = "move" -> raise Malformed 
   | h :: _ :: [] when String.lowercase_ascii h = "move" -> raise Malformed
   | h :: t  when String.lowercase_ascii h = "move" -> Move (List.map convert_coord t)
