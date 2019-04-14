@@ -2,10 +2,6 @@
    Parsing of player commands.
 *)
 
-<<<<<<< HEAD
-(* fst action = piece to be moved, snd action = end location of moved piece*)
-type action = (int*int) list
-=======
 (** The type [action] is the series of moves the player requests to make, where
     the first element is the coordinate of the piece to be moved. 
     Each element of [action] is formatted under the coordinate system of 
@@ -15,7 +11,6 @@ type action = (int*int) list
     bottom-right corner is (8,1),
     top-left corner is (1,8), 
     and top-right corner is (8,8)
->>>>>>> 8ab74ac4053204b99708acd998a230a2f16e9c38
 
     To the player, the checkerboard coordinate is labelled 'a' to 'h' from 
     left to right and '1' to '8' from bottom to top. 
@@ -50,10 +45,6 @@ exception Empty
 (** Raised when a malformed command is encountered. *)
 exception Malformed
 
-<<<<<<< HEAD
-val parse : string -> command
-
-=======
 (** [parse str] parses a player's input into a [command], as follows. The first
     word (i.e., consecutive sequence of non-space characters) of [str] becomes 
     the verb. The rest of the words, if any, become the action. 
@@ -80,4 +71,3 @@ val parse : string -> command
     - "move {i}" where {i} is a string with more than one checkerboard 
       coordinate point *)
 val parse : string -> command
->>>>>>> 8ab74ac4053204b99708acd998a230a2f16e9c38
