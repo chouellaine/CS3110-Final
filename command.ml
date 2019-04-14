@@ -73,7 +73,7 @@ let parse_rec lst newlst =
   | [] -> newlst  
   | h :: [] -> [h]
   | h :: t when h <> "move" ->  raise Malformed
-  | h :: t when h = "move" -> move_parse false t []
+  | h :: t when h = "move" -> move_parse false t ["move"]
   | _ -> failwith "shouldn't get here"
 
 (** [convert_coord] is [c] in (x,y) coordinate format
