@@ -3,7 +3,7 @@
 *)
 
 (* fst action = piece to be moved, snd action = end location of moved piece*)
-type action = (int*int) * (int*int)
+type action = (int*int) list
 
 type command = 
   | Start
@@ -20,4 +20,6 @@ exception Empty
 
 (** Raised when a malformed command is encountered. *)
 exception Malformed
+
+val parse : string -> command
 
