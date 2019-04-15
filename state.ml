@@ -14,17 +14,17 @@ type t = {
 (** The type representing the result of an attempted move. *)
 type result = Legal of t | Illegal
 
-(* [get_int_letter num] is the board character corresponding to the integer 
+(** [get_int_letter num] is the board character corresponding to the integer 
    coordinate given. For example, 1 corresponds to A, 2 to B ... 8 to H *)
 let get_int_letter num = 
   Char.chr (64 + num)
 
-(* [pp_coord coord] pretty prints [coord] *)
+(** [pp_coord coord] pretty prints [coord] *)
 let pp_coord coord = 
   print_char (get_int_letter (fst coord));
   print_int (snd coord)
 
-(* [pp_move mv] pretty prints [mv] *)
+(** [pp_move mv] pretty prints [mv] *)
 let rec pp_move mv = 
   match mv with 
   | [] -> ()
@@ -93,7 +93,7 @@ let get_normal_moves piece piece_lst =
     helper (x,y) piece_lst Red @ helper (x,y) piece_lst Black
 
 
-(* [taken_piece start dest color piece_lst] is [None] if the jump described 
+(** [taken_piece start dest color piece_lst] is [None] if the jump described 
    by moving the piece at [start] to [dest] with color [color] given the 
    current list of pieces on the board [piece_lst] is invalid or [Some p] if 
    the jump is valid where [p] is the piece that was taken *)
@@ -106,7 +106,7 @@ let taken_piece start dest color piece_lst =
   else None
 
 
-(* [get_jump_coords piece piece_lst] is the list of coordinates [piece] can 
+(** [get_jump_coords piece piece_lst] is the list of coordinates [piece] can 
    jump to given the pieces on the board [piece_lst] *)
 let get_jump_coords piece piece_lst = 
   let helper start p_lst color = 
@@ -122,7 +122,7 @@ let get_jump_coords piece piece_lst =
   helper (get_coords piece) piece_lst (get_color piece)
 
 
-(* [remove_piece_w_coords coords acc p_lst] is [p_lst] and any elements 
+(** [remove_piece_w_coords coords acc p_lst] is [p_lst] and any elements 
    initially in  [acc]  without the piece with coordinates [coords] *)
 let rec remove_piece_w_coords coords acc = function 
   | [] -> acc
@@ -130,7 +130,7 @@ let rec remove_piece_w_coords coords acc = function
   | h::t -> remove_piece_w_coords coords (h::acc) t
 
 
-(* [get_jump_moves piece piece_lst] is the list of valid moves involving one or
+(** [get_jump_moves piece piece_lst] is the list of valid moves involving one or
    more jumps for a certain piece [piece] and a list of all pieces 
    on the board [piece_lst] *)
 let get_jump_moves piece piece_lst = 
@@ -152,7 +152,6 @@ let get_jump_moves piece piece_lst =
       in
       helper p' p_lst' (curr_path@[h]) cmp_paths
   in helper piece (remove_piece_w_coords start_coords [] piece_lst) [] []
-
 
 let get_all_moves st = 
   let color = if st.turn mod 2 = 0 then Red else Black in 
@@ -185,8 +184,7 @@ let rec piece_at coords piece_lst =
 (** [piece_lst_helper st mv] is the tuple of the list of piece coordinates to be 
     removed after performing move [mv] on state [st] with list of piece 
     coordinates to be removed [acc] and the last coordinate in [mv].
-    Requires: [mv] is a valid move. 
-*)
+    Requires: [mv] is a valid move.*)
 let rec piece_lst_helper mv acc = 
   match mv with 
   | [] -> failwith("You have a move with no elements. This shouldn't happen")
@@ -245,11 +243,7 @@ let get_score st =
       if color = Black then helper (acc + 1) t else  helper (acc - 1) t
   in helper 0 st.pieces
 
-(* TODO ADD DOCS or remove function if unnecessary? *)
-let print_prompt () = 
-  failwith "unimplemented print_prompt"
-
-(* TODO ADD DOCS *)
+(** [print_row] prints the checkerboard. *)
 let print_row coords subrow piece=
   begin
     match (coords,subrow,piece) with
@@ -322,7 +316,8 @@ let print_row coords subrow piece=
     | _ -> failwith "idk"
   end
 
-
+(** [print_row] prints the checkerboard with the pieces placed in the 
+coordinates listed in [pieces] *)
 let print_board pieces = 
   for col=1 to 8 do
     for subrow=1 to 5 do
