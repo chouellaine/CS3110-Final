@@ -16,7 +16,7 @@ open Command
 
 type menu = int 
 
-
+(**DO SPECS *)
 let parse_thunk () = parse(read_line())
 
 (** [helper_string str] prints [str] with a new line. *)
@@ -48,11 +48,13 @@ let check_end_game_condition st =
       command is issued
 *)
 let rec play_game s = 
-  helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'";
   match parse_thunk() with 
-  | Moves -> pp_move_lst (get_all_moves s) ; play_game s
-  | Move m -> begin match move s m with 
-      | Legal s' -> print_board s.pieces; play_game s'
+  | Moves -> pp_move_lst (get_all_moves s) ; 
+  helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game s
+  | Move m -> 
+  begin match move s m with 
+      | Legal s' -> print_board s'.pieces; 
+      helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game s'
       | Illegal -> helper_string "Illegal move. Try again.\n"; play_game s
     end
   | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game s
@@ -108,7 +110,8 @@ let main () =
   let opp =  menu_2 (parse_thunk) in 
   if opp = Player then (
     print_board (new_game ()).pieces;
-    (play_game (new_game ()))) else failwith "AI version not implemented"
+    (helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; 
+    play_game (new_game ()))) else failwith "AI version not implemented"
 
 (* Execute the game engine. *)
 let () = main ()
