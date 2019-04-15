@@ -14,6 +14,28 @@ type t = {
 (** The type representing the result of an attempted move. *)
 type result = Legal of t | Illegal
 
+(* [get_int_letter num] is the board character corresponding to the integer 
+   coordinate given. For example, 1 corresponds to A, 2 to B ... 8 to H *)
+let get_int_letter num = 
+  Char.chr (64 + num)
+
+let pp_coord coord = 
+  print_char (get_int_letter (fst coord));
+  print_int (snd coord)
+
+let rec pp_move mv = 
+  match mv with 
+  | [] -> ()
+  | h::[] -> pp_coord h; 
+  | h::t -> pp_coord h; print_string " to ";
+    pp_move t 
+
+let rec pp_move_lst mv_lst = 
+  match mv_lst with 
+  | [] -> print_endline ""
+  | h::t -> pp_move h; print_endline ""; 
+    pp_move_lst t
+
 
 let new_game () = 
   {
@@ -30,7 +52,8 @@ let new_game () =
 
 (** [in bounds coords] is whether [coords] is in bounds of the board. *)
 let in_bounds coords = 
-  fst coords >= 1 && fst coords <= 8 && snd coords <= 8 && snd coords >= 1
+  (fst coords) >= 1 && (fst coords) <= 8 && 
+  (snd coords) <= 8 && (snd coords) >= 1
 
 (** [get_color piece] returns the color of [piece]. *)
 let get_color = function
@@ -43,7 +66,7 @@ let get_coords = function
   | P (_, coords) -> coords
 
 let check_win st = 
-  failwith("unimplemented")
+  failwith("unimplemented check_win")
 
 (** [piece_at coords piece_lst] is an option, Some p where piece from 
     [piece_lst] that has coordinates [coords] or None if no pieces match the 
@@ -55,8 +78,8 @@ let rec piece_at coords piece_lst =
   | ((K (_, coords')) as p):: t when coords = coords' -> Some p
   | _ :: t -> piece_at coords t
 
-(** [get_normal_moves piece piece_lst] is a list of of moves that a piece
-    [piece] can take without jumping given piece list [piece_lst]. *)
+(** [get_normal_moves piece piece_lst] is a list of of moves that
+    [piece] can take without jumping given the [piece_lst]. *)
 let get_normal_moves piece piece_lst = 
   let helper start p_lst color = 
     let ydif = if color = Red then ~-1 else 1 in 
@@ -77,17 +100,20 @@ let taken_piece start dest color piece_lst =
     | Some piece -> if (get_color piece) <> color then (Some in_between) else None
   else None
 
-let get_jump_paths piece piece_lst = 
+let get_jump_coords piece piece_lst = 
   let helper start p_lst color = 
     let ydif = if color = Red then ~-2 else 2 in 
     let (x,y) = start in 
+    let possible_coords = 
+      match piece with 
+      | K _ -> [(x - 2, y + 2); (x + 2, y + 2); (x - 2, y - 2); (x + 2, y - 2)]
+      | P _ -> [(x - 2, y + ydif); (x + 2, y + ydif)] in 
     (List.filter (fun pos -> (taken_piece start pos color p_lst) <> None) 
-       [(x - 2, y + ydif); (x + 2, y + ydif)]) in
-  match piece with 
-  | P (color, (x,y)) -> helper (x,y) piece_lst color 
-  | K (_, (x,y)) -> 
-    helper (x,y) piece_lst Red  @ 
-    helper (x,y) piece_lst Black  
+       possible_coords)
+  in
+  helper (get_coords piece) piece_lst (get_color piece)
+
+
 
 let rec remove_piece_w_coords coords acc = function 
   | [] -> acc
@@ -95,17 +121,25 @@ let rec remove_piece_w_coords coords acc = function
   | h::t -> remove_piece_w_coords coords (h::acc) t
 
 let get_jump_moves piece piece_lst = 
+  let start_coords = get_coords piece in 
   let rec helper p p_lst curr_path cmp_paths = 
     let c = get_color p in 
-    match get_jump_paths p p_lst with 
-    | [] -> curr_path::cmp_paths
+    let curr_x,curr_y = get_coords p in 
+    match get_jump_coords p p_lst with 
+    | [] -> 
+      if List.length curr_path = 0 then cmp_paths 
+      else (start_coords::curr_path)::cmp_paths
     | h :: t -> 
       let p' = match p with 
-        | K _-> K (c, h)
+        | K _-> K (c, h) 
         | P _-> P (c, h) in 
-      let p_lst' = remove_piece_w_coords h [] p_lst in
+      let p_lst' = 
+        remove_piece_w_coords 
+          (((fst h)+curr_x)/2, ((snd h)+curr_y)/2) [] p_lst 
+      in
       helper p' p_lst' (curr_path@[h]) cmp_paths
-  in helper piece piece_lst [] []
+  in helper piece (remove_piece_w_coords start_coords [] piece_lst) [] []
+
 
 
 (** A move is valid if:
@@ -122,16 +156,18 @@ let get_all_moves st =
   let rec add_jump_moves c p_lst acc = 
     match p_lst with 
     | [] -> acc
-    | h::t -> 
-      add_jump_moves c t ((get_jump_moves h st.pieces) @ acc) in 
+    | h::t when get_color h = c -> 
+      add_jump_moves c t ((get_jump_moves h st.pieces) @ acc)
+    | h::t -> add_jump_moves c t acc in 
   let rec add_normal_moves c p_lst acc = 
     match p_lst with 
     | [] -> acc 
-    | h::t -> 
-      add_normal_moves c t ((get_normal_moves h st.pieces) @ acc) in 
+    | h::t when get_color h = c -> 
+      add_normal_moves c t ((get_normal_moves h st.pieces) @ acc)
+    | h::t -> add_normal_moves c t acc in 
   let moves = add_jump_moves color st.pieces [] in 
-  if List.length moves = 0 then add_normal_moves color st.pieces moves 
-  else moves
+  if List.length moves <> 0 then moves 
+  else add_normal_moves color st.pieces []
 
 
 
@@ -185,7 +221,7 @@ let rec remove_pieces remove_lst piece_lst acc =
     with piece list [piece_lst]. 
     Requires: [mv] is a valid move. *)
 let update_piece_list piece_lst mv = 
-  let remove_lst = piece_lst_helper mv [] in 
+  let remove_lst = piece_lst_helper mv [List.hd mv] in 
   let final_dest = List.(hd (rev mv)) in 
   let my_piece = piece_at (List.hd mv) piece_lst in 
   let new_piece = 
@@ -224,8 +260,8 @@ let move st mv =
      "Player 1 Won!" 
      "50 move limit has been reached. Game Oh-vah", etc *)
 
-let print_prompt = 
-  failwith "unimplemented"
+let print_prompt () = 
+  failwith "unimplemented print_prompt"
 
 let print_row coords subrow piece=
   begin

@@ -22,7 +22,7 @@ let helper_string str =
 
 
 let check_end_game_condition st = 
-  failwith("unimplemented")
+  failwith("unimplemented check_end_game_condition")
 
 
 (** [play_game ()] begins and a game of checkers and plays through it by
@@ -48,7 +48,7 @@ let rec play_game s =
   print_board s.pieces;
   helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'";
   match parse (read_line ()) with 
-  | Moves -> (*** (print get_moves s) *) helper_string "MOVES"; play_game s
+  | Moves -> pp_move_lst (get_all_moves s) ; play_game s
   | Move m -> begin match move s m with 
       | Legal s' -> print_board s.pieces; play_game s'
       | Illegal -> helper_string "Illegal move. Try again."; play_game s

@@ -20,6 +20,9 @@ type t = {
   turn: int; 
 }
 
+(** [pp_move_lst mv_lst] pretty prints the move list [mv_lst] *)
+val pp_move_lst : ((int * int) list) list -> unit
+
 (** [new_game ()] is the state of a new game. All pieces are on the board in 
     their original positions and it is red's turn (turn = 1).  *)
 val new_game : unit -> t
