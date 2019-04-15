@@ -51,15 +51,23 @@ let rec play_game s =
   | Moves -> pp_move_lst (get_all_moves s) ; play_game s
   | Move m -> begin match move s m with 
       | Legal s' -> print_board s.pieces; play_game s'
-      | Illegal -> helper_string "Illegal move. Try again."; play_game s
+      | Illegal -> helper_string "Illegal move. Try again.\n"; play_game s
     end
-  | Draw -> helper_string "A draw has been offered. Do you accept of reject?";
-    begin 
-      match parse(read_line ()) with
-      | Accept -> helper_string "Draw accepted. The game has been drawn";
-      | Reject -> helper_string "Draw rejected."; play_game s
-    end
+  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game s
+  | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game s
+  | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
+    accept_or_reject s;
+  | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
   | _ -> failwith "something died"
+
+and accept_or_reject s =
+  match parse(read_line ()) with
+  | Accept -> helper_string "Draw accepted. The game has been drawn.\n";
+  | Reject -> helper_string "Draw rejected.\n"; play_game s
+  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; accept_or_reject s
+  | exception Empty -> helper_string "Empty Command. Try again.\n"; accept_or_reject s
+  |Start| Quit| Score| Draw| Moves| Opponent _|Move _ 
+    -> helper_string "You must accept or reject the draw"; accept_or_reject s
 
 let rec menu_2 a= 
   begin
