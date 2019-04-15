@@ -77,7 +77,6 @@ let rec piece_at coords piece_lst =
   | ((K (_, coords')) as p):: t when coords = coords' -> Some p
   | _ :: t -> piece_at coords t
 
-
 (** [get_normal_moves piece piece_lst] is a list of of moves that
     [piece] can take without jumping given the [piece_lst]. *)
 let get_normal_moves piece piece_lst = 
@@ -92,7 +91,6 @@ let get_normal_moves piece piece_lst =
   | K (_, (x,y)) -> 
     helper (x,y) piece_lst Red @ helper (x,y) piece_lst Black
 
-
 (* [taken_piece start dest color piece_lst] is [None] if the jump described 
    by moving the piece at [start] to [dest] with color [color] given the 
    current list of pieces on the board [piece_lst] is invalid or [Some p] if 
@@ -104,7 +102,6 @@ let taken_piece start dest color piece_lst =
     | None -> None
     | Some piece -> if (get_color piece) <> color then (Some in_between) else None
   else None
-
 
 (* [get_jump_coords piece piece_lst] is the list of coordinates [piece] can 
    jump to given the pieces on the board [piece_lst] *)
@@ -121,14 +118,12 @@ let get_jump_coords piece piece_lst =
   in
   helper (get_coords piece) piece_lst (get_color piece)
 
-
 (* [remove_piece_w_coords coords acc p_lst] is [p_lst] and any elements 
    initially in  [acc]  without the piece with coordinates [coords] *)
 let rec remove_piece_w_coords coords acc = function 
   | [] -> acc
   | h::t when coords = get_coords h -> acc@t
   | h::t -> remove_piece_w_coords coords (h::acc) t
-
 
 (* [get_jump_moves piece piece_lst] is the list of valid moves involving one or
    more jumps for a certain piece [piece] and a list of all pieces 
@@ -152,7 +147,6 @@ let get_jump_moves piece piece_lst =
       in
       helper p' p_lst' (curr_path@[h]) cmp_paths
   in helper piece (remove_piece_w_coords start_coords [] piece_lst) [] []
-
 
 let get_all_moves st = 
   let color = if st.turn mod 2 = 0 then Red else Black in 
@@ -321,7 +315,6 @@ let print_row coords subrow piece=
       ANSITerminal.(print_string [on_black;magenta] "/  ");
     | _ -> failwith "idk"
   end
-
 
 let print_board pieces = 
   for col=1 to 8 do
