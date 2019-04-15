@@ -1,8 +1,10 @@
 open State
 open Command
 
-(**  Menu Level 1 accepts commands: "Start", "Quit" 
-     Display:  "Welcome to blah, type Start/Quit, etc"
+(*   Game Infrastucture:
+
+     Menu Level 1 accepts commands: "Start", "Quit" 
+     Display:  "Welcome to Checker, type Start/Quit, etc"
 
      Menu Level 2 accepts commands: "Player" , "AI", "Quit"
      Display: "Player vs Player or Player vs AI,etc "
@@ -14,19 +16,12 @@ open Command
      Commands: "Quit", "Start","Player", "AI", "jump (x1,y1) to (x2,y2)", 
      "move (x1,y1) to (x2,y2)", "offer draw", "accept draw"," reject draw"*)
 
-type menu = int 
-
-(**DO SPECS *)
 let parse_thunk () = parse(read_line())
 
 (** [helper_string str] prints [str] with a new line. *)
 let helper_string str =  
   ANSITerminal.(print_string [red] 
                   ("\n \n " ^ str ^ " \n > \n"))
-
-let check_end_game_condition st = 
-  failwith("unimplemented check_end_game_condition")
-
 
 (** [play_game ()] begins and a game of checkers and plays through it by
 
@@ -75,6 +70,7 @@ and accept_or_reject s =
   | Start| Quit| Score| Draw| Moves| Opponent _ |Move _ 
     -> helper_string "You must accept or reject the draw"; accept_or_reject s
 
+(**[menu_2] runs the game at Level Menu 2.*)
 let rec menu_2 a= 
   begin
     match a() with 
@@ -86,6 +82,7 @@ let rec menu_2 a=
       -> helper_string "Invalid Command. Try again.\n"; menu_2 (parse_thunk);
   end
 
+(**[menu_1] runs the game at Level Menu 2.*)
 let rec menu_1 a = 
   begin
     match a() with 

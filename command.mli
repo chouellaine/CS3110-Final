@@ -24,9 +24,12 @@
       still [(1,1);(1,5);(8,1)].
 
     An [object_phrase] is not permitted to be the empty list. *)
-
 type action = (int*int) list
+
+(** [ptype] the player's opponent, which is another user [Player]
+or the [AI] *)
 type ptype = Player | AI 
+
 (** The type [command] represents a player command that is decomposed
     into a verb and possibly an action. *)
 type command = 
