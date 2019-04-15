@@ -78,8 +78,6 @@ let read_cmd = function
   | h :: t  when String.lowercase_ascii h = "jump" -> Move (List.map convert_coord t)
   | _ :: _ -> raise Malformed 
 
-(** [parse str] parses player's command into a command. 
-    Raise Empty if str is [] and Malformed if str is an invalid command. *)
 let parse str =
   let split = String.split_on_char ' ' (String.trim str) in 
   let lst = List.rev (parse_rec split []) in 
