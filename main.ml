@@ -16,10 +16,13 @@ open Command
 
 type menu = int 
 
+
+let parse_thunk () = parse(read_line())
+
 (** [helper_string str] prints [str] with a new line. *)
 let helper_string str =  
-  print_endline (String.concat "" (str :: "\n" :: []))
-
+  ANSITerminal.(print_string [red] 
+  ("\n \n " ^ str ^ " \n > \n"))
 
 let check_end_game_condition st = 
   failwith("unimplemented check_end_game_condition")
@@ -45,9 +48,8 @@ let check_end_game_condition st =
       command is issued
 *)
 let rec play_game s = 
-  print_board s.pieces;
   helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'";
-  match parse (read_line ()) with 
+  match parse_thunk() with 
   | Moves -> pp_move_lst (get_all_moves s) ; play_game s
   | Move m -> begin match move s m with 
       | Legal s' -> print_board s.pieces; play_game s'
@@ -61,7 +63,7 @@ let rec play_game s =
   | _ -> failwith "something died"
 
 and accept_or_reject s =
-  match parse(read_line ()) with
+  match parse_thunk() with
   | Accept -> helper_string "Draw accepted. The game has been drawn.\n";
   | Reject -> helper_string "Draw rejected.\n"; play_game s
   | exception Malformed -> helper_string "Invalid Command. Try again.\n"; accept_or_reject s
@@ -71,36 +73,39 @@ and accept_or_reject s =
 
 let rec menu_2 a= 
   begin
-    match a with 
-    | exception Malformed  -> helper_string "Invalid Command. Try again.\n"; menu_2 (parse(read_line()));
-    | exception Empty -> helper_string "Empty Command. Try again.\n" ; menu_2 (parse(read_line())); 
+    match a() with 
+    | exception Malformed  -> helper_string "Invalid Command. Try again.\n"; menu_2 (parse_thunk);
+    | exception Empty -> helper_string "Empty Command. Try again.\n" ; menu_2 (parse_thunk); 
     | Opponent p -> p
     | Quit -> helper_string "Quitting Game. \n"; Pervasives.exit 0
     | Score | Draw | Moves | Accept | Reject | Start | Move _ 
-      -> helper_string "Invalid Command. Try again.\n"; menu_2 (parse(read_line()));
+      -> helper_string "Invalid Command. Try again.\n"; menu_2 (parse_thunk);
   end
 
 let rec menu_1 a = 
   begin
-    match a with 
-    | exception Malformed  -> helper_string "Invalid Command. Try again.\n"; menu_1 (parse(read_line()));
-    | exception Empty -> helper_string "Empty Command. Try again.\n" ; menu_1 (parse(read_line())); 
+    match a() with 
+    | exception Malformed  -> helper_string "Invalid Command. Try again.\n"; 
+    menu_1 (parse_thunk);
+    | exception Empty -> helper_string "Empty Command. Try again.\n" ; 
+    menu_1 (parse_thunk); 
     | Start -> ()
     | Quit ->  helper_string "Quitting Game. \n"; Pervasives.exit 0
     | Score | Draw | Moves | Accept | Reject | Opponent _ | Move _ 
-      -> helper_string "Invalid Command. Try again.\n"; menu_1 (parse(read_line()));
+      -> helper_string "Invalid Command. Try again.\n"; 
+      menu_1 (parse_thunk);
   end 
 
 (** [main ()] prints the prompt for the game to play, then starts it. *)
 let main () =
   ANSITerminal.(print_string [red]
                   "\n\nWelcome to CHECKER ! \n 
-    Please type 'Start' or 'Quit' to move forward. \n > \n");
-  menu_1 (parse(read_line())); 
+    Please enter 'Start' or 'Quit' to move forward. \n > \n");
+  menu_1 (parse_thunk); 
   ANSITerminal.(print_string [red]
-                  "\n\n Player vs Player or Player vs AI? 
-                    Please enter 'player' or 'AI' to move forward. \n > \n");
-  let opp =  menu_2 (parse(read_line())) in 
+                  "\n\n Player vs Player or Player vs AI? \n 
+                  Please enter 'player' or 'AI' to move forward. \n > \n");
+  let opp =  menu_2 (parse_thunk) in 
   if opp = Player then (
     print_board (new_game ()).pieces;
     (play_game (new_game ()))) else failwith "AI version not implemented"

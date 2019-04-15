@@ -117,7 +117,9 @@ let read_cmd = function
 (** [parse str] parses player's command into a command. 
     Raise Empty if str is [] and Malformed if str is an invalid command. *)
 let parse str =
-  let split = String.split_on_char ' ' str in 
+  let split = String.split_on_char ' ' (String.trim str) in 
   let lst = List.rev (parse_rec split []) in 
   if lst = [] then raise Empty 
   else read_cmd lst 
+
+let parse_thunk () = parse(read_line())
