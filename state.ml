@@ -145,6 +145,16 @@ let get_score st =
       if color = Black then helper (acc + 1) t else  helper (acc - 1) t
   in helper 0 st.pieces
 
+(** [piece_at coords piece_lst] is an option, Some p where piece from 
+    [piece_lst] that has coordinates [coords] or None if no pieces match the 
+    coordinates [coords]. *)
+let rec piece_at coords piece_lst = 
+  match piece_lst with
+  | [] -> None
+  | ((P (_, coords')) as p) :: t when coords = coords' -> Some p
+  | ((K (_, coords')) as p) :: t when coords = coords' -> Some p
+  | _ :: t -> piece_at coords t
+
 (** [piece_lst_helper st mv] is the tuple of the list of piece coordinates to be 
     removed after performing move [mv] on state [st] with list of piece 
     coordinates to be removed [acc] and the last coordinate in [mv].
