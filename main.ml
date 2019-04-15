@@ -46,7 +46,7 @@ let check_end_game_condition st =
 *)
 let rec play_game s = 
   match parse (read_line ()) with 
-  | Moves -> (print get_moves s) play_game s
+  (* | Moves -> (print get_all_moves s) play_game s *)
   | Move m -> begin match move s m with 
       | Legal s' -> print_board s.pieces; play_game s'
       | Illegal -> helper_string "Illegal move. Try again."; play_game s

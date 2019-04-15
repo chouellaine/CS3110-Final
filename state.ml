@@ -42,6 +42,9 @@ let get_coords = function
   | K (_, coords)
   | P (_, coords) -> coords
 
+let check_win st = 
+  failwith("unimplemented")
+
 (** [piece_at coords piece_lst] is an option, Some p where piece from 
     [piece_lst] that has coordinates [coords] or None if no pieces match the 
     coordinates [coords]. *)
@@ -66,40 +69,43 @@ let get_normal_moves piece piece_lst =
   | K (_, (x,y)) -> 
     helper (x,y) piece_lst Red @ helper (x,y) piece_lst Black
 
-let taken_piece start dest color piece_lst taken = 
+let taken_piece start dest color piece_lst = 
   let in_between = ((fst start + fst dest) / 2, (snd start + snd dest)/2) in 
   if in_bounds dest && (piece_at dest piece_lst) = None then 
     match piece_at in_between piece_lst with
     | None -> None
-    | Some piece when List.mem piece taken -> None
     | Some piece -> if (get_color piece) <> color then (Some in_between) else None
   else None
 
-let get_jump_paths piece piece_lst taken_pieces = 
-  let helper start p_lst color taken = 
+let get_jump_paths piece piece_lst = 
+  let helper start p_lst color = 
     let ydif = if color = Red then ~-2 else 2 in 
     let (x,y) = start in 
-    (List.filter (fun pos -> (taken_piece start pos color p_lst taken) <> None) 
+    (List.filter (fun pos -> (taken_piece start pos color p_lst) <> None) 
        [(x - 2, y + ydif); (x + 2, y + ydif)]) in
   match piece with 
-  | P (color, (x,y)) -> helper (x,y) piece_lst color taken_pieces
+  | P (color, (x,y)) -> helper (x,y) piece_lst color 
   | K (_, (x,y)) -> 
-    helper (x,y) piece_lst Red taken_pieces @ 
-    helper (x,y) piece_lst Black taken_pieces 
+    helper (x,y) piece_lst Red  @ 
+    helper (x,y) piece_lst Black  
+
+let rec remove_piece_w_coords coords acc = function 
+  | [] -> acc
+  | h::t when coords = get_coords h -> acc@t
+  | h::t -> remove_piece_w_coords coords (h::acc) t
 
 let get_jump_moves piece piece_lst = 
-  let rec helper piece p_lst curr_path taken cmp_paths = 
-    let c = get_color piece in 
-    match get_jump_paths piece p_lst taken with 
+  let rec helper p p_lst curr_path cmp_paths = 
+    let c = get_color p in 
+    match get_jump_paths p p_lst with 
     | [] -> curr_path::cmp_paths
-    | h1 :: t -> helper h1 c (curr_path@h1) updatedtaken cmp_paths
-  in 
-
-  get_jump_paths  
-
-    match piece with 
-    | P (color, (x,y)) -> helper (x,y) piece_lst color [] []
-    | K (_, (x,y)) -> helper (x,y) piece_lst Red [] [] @ helper (x,y) piece_lst Black [] []
+    | h :: t -> 
+      let p' = match p with 
+        | K _-> K (c, h)
+        | P _-> P (c, h) in 
+      let p_lst' = remove_piece_w_coords h [] p_lst in
+      helper p' p_lst' (curr_path@[h]) cmp_paths
+  in helper piece piece_lst [] []
 
 
 (** A move is valid if:
@@ -112,7 +118,22 @@ let get_jump_moves piece piece_lst =
     - "move" command can also be interpreted as a "jump" command, but 
         "jump" command MUST only be jumping over opponent's pieces. *)
 let get_all_moves st = 
-  failwith("unimplemented")
+  let color = if st.turn mod 2 = 0 then Red else Black in 
+  let rec add_jump_moves c p_lst acc = 
+    match p_lst with 
+    | [] -> acc
+    | h::t -> 
+      add_jump_moves c t ((get_jump_moves h st.pieces) @ acc) in 
+  let rec add_normal_moves c p_lst acc = 
+    match p_lst with 
+    | [] -> acc 
+    | h::t -> 
+      add_normal_moves c t ((get_normal_moves h st.pieces) @ acc) in 
+  let moves = add_jump_moves color st.pieces [] in 
+  if List.length moves = 0 then add_normal_moves color st.pieces moves 
+  else moves
+
+
 
 (** [get_score st points] gets the current number of black pieces minus the 
     current number of red pieces. *)
@@ -131,14 +152,13 @@ let get_score st =
     Requires: [mv] is a valid move. 
 *)
 let rec piece_lst_helper mv acc = 
-  let first_coords = List.hd mv in
   match mv with 
-  | [] 
-  | h :: [] -> (first_coords::acc, h)
+  | [] -> failwith("You have a move with no elements. This shouldn't happen")
+  | h :: [] -> acc
   | (x1,y1) :: (x2,y2) :: t -> 
     if abs (y2-y1) = 2 
-    then piece_lst_helper (x2,y2)::t ((x2+x1)/2, (y1+y2)/2)::acc 
-    else piece_lst_helper (x2,y2)::t acc 
+    then piece_lst_helper ((x2,y2)::t) (((x2+x1)/2, (y1+y2)/2)::acc)
+    else piece_lst_helper ((x2,y2)::t) acc 
 
 
 (** [remove_pieces remove_lst piece_lst] is [piece_lst] without pieces that have
@@ -146,8 +166,8 @@ let rec piece_lst_helper mv acc =
 let rec remove_pieces remove_lst piece_lst acc = 
   match piece_lst with
   | [] -> acc
-  | K (_, coord) :: t 
-  | P (_, coord) :: t -> 
+  | ((K (_, coord)) as h) :: t 
+  | ((P (_, coord)) as h) :: t -> 
     if List.mem coord remove_lst then remove_pieces remove_lst t acc 
     else remove_pieces remove_lst t (h :: acc)
 
@@ -155,7 +175,8 @@ let rec remove_pieces remove_lst piece_lst acc =
     with piece list [piece_lst]. 
     Requires: [mv] is a valid move. *)
 let update_piece_list piece_lst mv = 
-  let (remove_lst, final_dest) = piece_lst_helper mv [] in 
+  let remove_lst = piece_lst_helper mv [] in 
+  let final_dest = List.(hd (rev mv)) in 
   let my_piece = piece_at (List.hd mv) piece_lst in 
   let new_piece = 
     match my_piece with 
@@ -165,7 +186,7 @@ let update_piece_list piece_lst mv =
       if (snd final_dest = 8 && color = Black) 
       || (snd final_dest = 1 && color = Red) then K (color, final_dest) 
       else P(color, final_dest) in
-  let updated_list = remove_pieces remove_lst piece_lst in 
+  let updated_list = remove_pieces remove_lst piece_lst [] in 
   new_piece :: updated_list
 
 (** TODO 
@@ -176,7 +197,7 @@ let update_piece_list piece_lst mv =
     Other functionalities: 
     - check if piece at can be crowned. *)
 let move st mv = 
-  if List.mem mv (get_moves st) then 
+  if List.mem mv (get_all_moves st) then 
     let st' = {pieces = update_piece_list st.pieces mv; turn = st.turn + 1} in 
     Legal st'
   else Illegal 
