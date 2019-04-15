@@ -19,10 +19,12 @@ type result = Legal of t | Illegal
 let get_int_letter num = 
   Char.chr (64 + num)
 
+(* [pp_coord coord] pretty prints [coord] *)
 let pp_coord coord = 
   print_char (get_int_letter (fst coord));
   print_int (snd coord)
 
+(* [pp_move mv] pretty prints [mv] *)
 let rec pp_move mv = 
   match mv with 
   | [] -> ()
@@ -65,11 +67,8 @@ let get_coords = function
   | K (_, coords)
   | P (_, coords) -> coords
 
-let check_win st = 
-  failwith("unimplemented check_win")
-
-(** [piece_at coords piece_lst] is an option, Some p where piece from 
-    [piece_lst] that has coordinates [coords] or None if no pieces match the 
+(** [piece_at coords piece_lst] is an option, [Some p] where [p] from 
+    [piece_lst] has coordinates [coords] or None if no pieces match the 
     coordinates [coords]. *)
 let rec piece_at coords piece_lst = 
   match piece_lst with
@@ -77,6 +76,7 @@ let rec piece_at coords piece_lst =
   | ((P (_, coords')) as p):: t when coords = coords' -> Some p 
   | ((K (_, coords')) as p):: t when coords = coords' -> Some p
   | _ :: t -> piece_at coords t
+
 
 (** [get_normal_moves piece piece_lst] is a list of of moves that
     [piece] can take without jumping given the [piece_lst]. *)
@@ -92,6 +92,11 @@ let get_normal_moves piece piece_lst =
   | K (_, (x,y)) -> 
     helper (x,y) piece_lst Red @ helper (x,y) piece_lst Black
 
+
+(* [taken_piece start dest color piece_lst] is [None] if the jump described 
+   by moving the piece at [start] to [dest] with color [color] given the 
+   current list of pieces on the board [piece_lst] is invalid or [Some p] if 
+   the jump is valid where [p] is the piece that was taken *)
 let taken_piece start dest color piece_lst = 
   let in_between = ((fst start + fst dest) / 2, (snd start + snd dest)/2) in 
   if in_bounds dest && (piece_at dest piece_lst) = None then 
@@ -100,6 +105,9 @@ let taken_piece start dest color piece_lst =
     | Some piece -> if (get_color piece) <> color then (Some in_between) else None
   else None
 
+
+(* [get_jump_coords piece piece_lst] is the list of coordinates [piece] can 
+   jump to given the pieces on the board [piece_lst] *)
 let get_jump_coords piece piece_lst = 
   let helper start p_lst color = 
     let ydif = if color = Red then ~-2 else 2 in 
@@ -114,12 +122,17 @@ let get_jump_coords piece piece_lst =
   helper (get_coords piece) piece_lst (get_color piece)
 
 
-
+(* [remove_piece_w_coords coords acc p_lst] is [p_lst] and any elements 
+   initially in  [acc]  without the piece with coordinates [coords] *)
 let rec remove_piece_w_coords coords acc = function 
   | [] -> acc
   | h::t when coords = get_coords h -> acc@t
   | h::t -> remove_piece_w_coords coords (h::acc) t
 
+
+(* [get_jump_moves piece piece_lst] is the list of valid moves involving one or
+   more jumps for a certain piece [piece] and a list of all pieces 
+   on the board [piece_lst] *)
 let get_jump_moves piece piece_lst = 
   let start_coords = get_coords piece in 
   let rec helper p p_lst curr_path cmp_paths = 
@@ -132,7 +145,7 @@ let get_jump_moves piece piece_lst =
     | h :: t -> 
       let p' = match p with 
         | K _-> K (c, h) 
-        | P _-> P (c, h) in 
+        | P _-> P (c, h) in  
       let p_lst' = 
         remove_piece_w_coords 
           (((fst h)+curr_x)/2, ((snd h)+curr_y)/2) [] p_lst 
@@ -141,16 +154,6 @@ let get_jump_moves piece piece_lst =
   in helper piece (remove_piece_w_coords start_coords [] piece_lst) [] []
 
 
-
-(** A move is valid if:
-    - check if desired destination is empty 
-    - if not a king, check if piece is moving diagonally (left/right) forward one spot 
-        AND if there are no available forward jumps to make 
-    - if king, check if piece is moving diagonally (left/right) forward/backward one spot
-        AND if there are no availble forward/backward jumps to make 
-    - check if player jumps over all possible pieces 
-    - "move" command can also be interpreted as a "jump" command, but 
-        "jump" command MUST only be jumping over opponent's pieces. *)
 let get_all_moves st = 
   let color = if st.turn mod 2 = 0 then Red else Black in 
   let rec add_jump_moves c p_lst acc = 
@@ -169,18 +172,6 @@ let get_all_moves st =
   if List.length moves <> 0 then moves 
   else add_normal_moves color st.pieces []
 
-
-
-(** [get_score st points] gets the current number of black pieces minus the 
-    current number of red pieces. *)
-let get_score st = 
-  let rec helper acc = function
-    | [] -> acc
-    | K (color, _)::t 
-    | P (color, _)::t -> 
-      if color = Black then helper (acc + 1) t else  helper (acc - 1) t
-  in helper 0 st.pieces
-
 (** [piece_at coords piece_lst] is an option, Some p where piece from 
     [piece_lst] that has coordinates [coords] or None if no pieces match the 
     coordinates [coords]. *)
@@ -194,7 +185,6 @@ let rec piece_at coords piece_lst =
 (** [piece_lst_helper st mv] is the tuple of the list of piece coordinates to be 
     removed after performing move [mv] on state [st] with list of piece 
     coordinates to be removed [acc] and the last coordinate in [mv].
-
     Requires: [mv] is a valid move. 
 *)
 let rec piece_lst_helper mv acc = 
@@ -235,34 +225,31 @@ let update_piece_list piece_lst mv =
   let updated_list = remove_pieces remove_lst piece_lst [] in 
   new_piece :: updated_list
 
-(** TODO 
-    [move st mv] is the result of attempting to make the move(s) specified by [mv]
-    If the move is legal, then the result is [Legal st'] where [st'] is the 
-    new state after taking the move [mv] in the state [st]. Otherwise, the 
-    result is [Illegal] 
-    Other functionalities: 
-    - check if piece at can be crowned. *)
+(** [move st mv] is the result of attempting to make the move(s) specified 
+    by [mv]. If the move is legal, then the result is [Legal st'] where 
+    [st'] is the new state after taking the move [mv] in the state [st]. 
+    Otherwise, the result is [Illegal] *)
 let move st mv = 
   if List.mem mv (get_all_moves st) then 
     let st' = {pieces = update_piece_list st.pieces mv; turn = st.turn + 1} in 
     Legal st'
   else Illegal 
 
+(** [get_score st points] gets the current number of black pieces minus the 
+    current number of red pieces. *)
+let get_score st = 
+  let rec helper acc = function
+    | [] -> acc
+    | K (color, _)::t 
+    | P (color, _)::t -> 
+      if color = Black then helper (acc + 1) t else  helper (acc - 1) t
+  in helper 0 st.pieces
 
-(*** TODO
-     To discuss: shouldn't printing to terminal be handled in main instead of
-     in game? 
-     [print_prompt] displays the correct prompt and the available commands for 
-     current game state, see command.ml for Menu Levels.
-     Example: "Player 1 offered a draw, would you like to accept or reject?"
-     "Player 2 played (x1,y1) to (x2,y2). It is now Player 1's turn." 
-     "Both players have agreed on a draw, game over."
-     "Player 1 Won!" 
-     "50 move limit has been reached. Game Oh-vah", etc *)
-
+(* TODO ADD DOCS or remove function if unnecessary? *)
 let print_prompt () = 
   failwith "unimplemented print_prompt"
 
+(* TODO ADD DOCS *)
 let print_row coords subrow piece=
   begin
     match (coords,subrow,piece) with
@@ -336,7 +323,6 @@ let print_row coords subrow piece=
   end
 
 
-
 let print_board pieces = 
   for col=1 to 8 do
     for subrow=1 to 5 do
@@ -358,4 +344,4 @@ let print_board pieces =
   print_string "    e     ";
   print_string "    f     ";
   print_string "    g     ";
-  print_string "    h     \n\n";
+  print_string "    h     \n\n"
