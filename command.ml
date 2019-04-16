@@ -32,9 +32,11 @@ let rec move_parse is_to lst newlst =
 
 (** [parse_rec lst newlst] is the [lst] with all empty strings and substring "to" removed.
     The substring "to" is case-insensitive. *)
-let parse_rec lst newlst =
+let rec parse_rec lst newlst =
   match lst with
   | [] -> newlst  
+  | h :: [] when h = "" -> newlst
+  | h :: t when h = "" -> parse_rec t newlst
   | h :: [] -> [h]
   | h :: t when h <> "move" ->  raise Malformed
   | h :: t when h = "move" -> move_parse false t ["move"]
@@ -82,4 +84,4 @@ let parse str =
   let split = String.split_on_char ' ' (String.trim str) in 
   let lst = List.rev (parse_rec split []) in 
   if lst = [] then raise Empty 
-  else read_cmd lst 
+  else read_cmd lst
