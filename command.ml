@@ -11,6 +11,7 @@ type command =
   | Reject 
   | Opponent of ptype
   | Move of action
+  | Rematch 
 
 exception Empty
 
@@ -75,10 +76,10 @@ let read_cmd = function
   | h :: [] when String.lowercase_ascii h = "move" -> raise Malformed 
   | h :: _ :: [] when String.lowercase_ascii h = "move" -> raise Malformed
   | h :: t  when String.lowercase_ascii h = "move" -> Move (List.map convert_coord t)
-  | h :: [] when String.lowercase_ascii h = "jump" -> raise Malformed 
-  | h :: _ :: [] when String.lowercase_ascii h = "jump" -> raise Malformed
-  | h :: t  when String.lowercase_ascii h = "jump" -> Move (List.map convert_coord t)
+  | h :: [] when String.lowercase_ascii h = "rematch" -> Rematch
+  | h :: t when String.lowercase_ascii h = "rematch" -> raise Malformed 
   | _ :: _ -> raise Malformed 
+
 
 let parse str =
   let split = String.split_on_char ' ' (String.trim str) in 

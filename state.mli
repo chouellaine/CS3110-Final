@@ -35,7 +35,7 @@ val get_all_moves : t -> ((int * int) list) list
 val get_score : t -> int
 
 (** The type representing the result of an attempted move. *)
-type result = Legal of t | Illegal
+type result = Legal of t | Illegal | Win of color
 
 (** [move st mv] is the result of attempting to make the move specified by [mv]
     If the move is legal, then the result is [Legal st'] where [st'] is the 

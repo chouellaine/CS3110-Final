@@ -27,7 +27,7 @@
 type action = (int*int) list
 
 (** [ptype] the player's opponent, which is another user [Player]
-or the [AI] *)
+    or the [AI] *)
 type ptype = Player | AI 
 
 (** The type [command] represents a player command that is decomposed
@@ -42,6 +42,7 @@ type command =
   | Reject
   | Opponent of ptype
   | Move of action
+  | Rematch
 
 (** Raised when an empty command is parsed. *)
 exception Empty
