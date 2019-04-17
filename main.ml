@@ -77,7 +77,7 @@ let rec play_game s =
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
     accept_or_reject s;
   | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
-  | _ -> failwith "something died"
+  | Rematch | Accept | Reject | Start | Opponent _ -> helper_string "Invalid Command. Try again.\n"; play_game s
 
 and accept_or_reject s =
   match parse_thunk() with
@@ -87,7 +87,7 @@ and accept_or_reject s =
   | exception Malformed -> helper_string "Invalid Command. Try again.\n"; accept_or_reject s
   | exception Empty -> helper_string "Empty Command. Try again.\n"; accept_or_reject s
   | Start| Quit| Score| Draw| Moves| Opponent _ |Move _ |Rematch
-    -> helper_string "You must accept or reject the draw"; accept_or_reject s
+    -> helper_string "Invalid command. You must accept or reject the draw.\n"; accept_or_reject s
 
 (**[menu_2] runs the game at Level Menu 2.*)
 let rec menu_2 a= 
@@ -98,7 +98,7 @@ let rec menu_2 a=
     | Opponent p -> p
     | Quit -> helper_string "Quitting Game. \n"; Pervasives.exit 0
     | Score | Draw | Moves | Accept | Reject | Start | Move _ |Rematch
-      -> helper_string "Invalid Command. Try again.\n"; menu_2 (parse_thunk);
+      -> helper_string "Invalid command. You must choose your opponent. \n"; menu_2 (parse_thunk);
   end
 
 (**[menu_1] runs the game at Level Menu 1.*)
@@ -112,7 +112,7 @@ let rec menu_1 a =
     | Start -> ()
     | Quit ->  helper_string "Quitting Game. \n"; Pervasives.exit 0
     | Score | Draw | Moves | Accept | Reject | Opponent _ | Move _ |Rematch
-      -> helper_string "Invalid Command. Try again.\n"; 
+      -> helper_string "Invalid Command. You must start or quit.\n"; 
       menu_1 (parse_thunk);
   end 
 
