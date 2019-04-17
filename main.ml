@@ -93,7 +93,7 @@ let rec menu_5 a=
     | Quit -> helper_string "Quitting Game. \n"; Pervasives.exit 0
     | HostClient a -> a
     | Score | Draw | Moves | Accept | Reject | Start | Move _ | Opponent _ | Rematch|SameDiff _
-      -> helper_string "Invalid Command. Try again.\n"; menu_5 parse_thunk
+      -> helper_string "Invalid Command. Try again. IN MENU 5\n"; menu_5 parse_thunk
   end
 
 let rec menu_4 a=
@@ -116,7 +116,7 @@ let rec menu_3 a=
     | Quit -> helper_string "Quitting Game. \n"; Pervasives.exit 0
     | Rematch -> raise Restart  
     | Score | Draw | Moves | Accept | Reject | Start | Move _ | Opponent _ | SameDiff _|HostClient _
-      -> helper_string "Invalid Command. Try again.\n"; menu_3 parse_thunk
+      -> helper_string "Invalid Command. Try again. MENU 3, other cmd\n"; menu_3 parse_thunk
   end
 
 (**[menu_2] runs the game at Level Menu 2.*)
@@ -162,11 +162,11 @@ let play_game() =
       print_board (new_game ()).pieces;
       (helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; 
        play_game (new_game ())))
-    else 
+    else (
       ANSITerminal.(print_string [red] "Do you want to be the host or client?\n");
-    let host_client = menu_5 (parse_thunk) in
-    if host_client = Host then host () else client ()
-  )
+      let host_client = menu_5 (parse_thunk) in
+      if host_client = Host then host () else client ()
+    ))
   else failwith "AI version not implemented";
   menu_3(parse_thunk) 
 
