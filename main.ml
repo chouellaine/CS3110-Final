@@ -77,6 +77,7 @@ let rec play_game s =
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
     accept_or_reject s;
   | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
+  | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; play_game s
   | _ -> failwith "something died"
 
 and accept_or_reject s =
