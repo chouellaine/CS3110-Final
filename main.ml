@@ -118,7 +118,7 @@ let rec menu_1 a =
 
 let play_game() = 
   ANSITerminal.(print_string [red]
-                  "\n\nWelcome to CHECKER ! \n 
+                  "\n\nWelcome to CHECKERS! \n 
     Please enter 'Start' or 'Quit' to move forward. \n > \n");
   menu_1 (parse_thunk); 
   ANSITerminal.(print_string [red]
