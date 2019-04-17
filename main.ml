@@ -67,7 +67,7 @@ let rec play_game s =
     accept_or_reject s;
   | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
   | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; play_game s
-  | _ -> failwith "something died"
+  | Opponent _ | Start| Accept | Reject -> helper_string "Invalid Command. Try again.\n"; play_game s
 
 and accept_or_reject s =
   match parse_thunk() with
