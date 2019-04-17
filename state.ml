@@ -137,15 +137,18 @@ let get_jump_moves piece piece_lst =
     | [] -> 
       if List.length curr_path = 0 then cmp_paths 
       else (start_coords::curr_path)::cmp_paths
-    | h :: t -> 
-      let p' = match p with 
-        | K _-> K (c, h) 
-        | P _-> P (c, h) in  
-      let p_lst' = 
-        remove_piece_w_coords 
-          (((fst h)+curr_x)/2, ((snd h)+curr_y)/2) [] p_lst 
+    | l -> 
+      let fold_f p p_lst x y curr_path cmp_paths el =
+        let p' = match p with 
+          | K _-> K (c, el) 
+          | P _-> P (c, el) in  
+        let p_lst' = 
+          remove_piece_w_coords 
+            (((fst el)+x)/2, ((snd el)+y)/2) [] p_lst 
+        in
+        helper p' p_lst' (curr_path@[el]) cmp_paths
       in
-      helper p' p_lst' (curr_path@[h]) cmp_paths
+      List.fold_left (fold_f p p_lst curr_x curr_y curr_path) cmp_paths l
   in helper piece (remove_piece_w_coords start_coords [] piece_lst) [] []
 
 let get_all_moves st = 
