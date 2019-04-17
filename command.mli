@@ -30,6 +30,10 @@ type action = (int*int) list
     or the [AI] *)
 type ptype = Player | AI 
 
+type sd = Same | Different
+
+type hc = Host | Client 
+
 (** The type [command] represents a player command that is decomposed
     into a verb and possibly an action. *)
 type command = 
@@ -40,6 +44,8 @@ type command =
   | Moves
   | Accept
   | Reject
+  | HostClient of hc
+  | SameDiff of sd
   | Opponent of ptype
   | Move of action
   | Rematch
