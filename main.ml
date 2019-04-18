@@ -116,6 +116,7 @@ let rec menu_1 a =
       menu_1 (parse_thunk);
   end 
 
+(** [play_game()] playes a new game. *)
 let play_game() = 
   ANSITerminal.(print_string [red]
                   "\n\nWelcome to CHECKER ! \n 
@@ -132,7 +133,6 @@ let play_game() =
   else failwith "AI version not implemented";
   menu_3(parse_thunk) 
 
-(** [main ()] prints the prompt for the game to play, then starts it. *)
 let main () =
   try play_game()
   with Restart -> play_game()
