@@ -2,6 +2,7 @@ open State
 open Command
 open Sockets
 open Unix
+open Ai
 
 (*   Game Infrastucture:
 
@@ -45,40 +46,44 @@ let helper_string str =
     - Prompting the user again if an illegal move is made or an unrecognized 
       command is issued
 *)
-let rec play_game str st = 
+let rec play_game str st ai = 
   match str with 
   | Moves -> pp_move_lst (get_all_moves st) ; 
-    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ())st
+    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ()) st ai
   | Move m -> 
     begin match move st m with 
-      | Legal st' -> print_board st'.pieces; 
-        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ()) st'
-      | Illegal -> helper_string "Illegal move. Try again.\n"; play_game (parse_thunk ())st
+      | Legal st' when not ai -> print_board st'.pieces; 
+        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ()) st' ai
+      | Legal st' when ai -> let st'' = (update_state st' (get_sugg_mv st' 7)) 
+        in print_board st''.pieces; 
+        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; 
+        play_game (parse_thunk ()) st'' ai
+      | Illegal -> helper_string "Illegal move. Try again.\n"; play_game (parse_thunk ()) st ai 
       | Win c when c = Black -> 
         helper_string "Game Over. Black Wins! \n  Quit or Rematch? \n"; ()
       | Win c when c = Red -> 
         helper_string "Game Over. Red Wins! \n  Quit or Rematch? \n"; ()
       | Win _ -> failwith "BUG in play_game, Win match!"
     end
-  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
-  | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game (parse_thunk ())st
+  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st ai 
+  | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game (parse_thunk ()) st ai 
   | Score -> print_float (get_eval st); 
-    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ())st
+    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ()) st ai
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
     accept_or_reject st;
   | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
-  | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; play_game (parse_thunk ())st
+  | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; play_game (parse_thunk ()) st ai
   | Opponent _ | Start| Accept | Reject|HostClient _|SameDiff _ 
-    -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
+    -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ()) st ai
 
 and accept_or_reject s =
   match parse_thunk() with
   | Accept -> helper_string "Draw accepted. The game has been drawn.\n Quit or Rematch? \n"; 
     () 
-  | Reject -> helper_string "Draw rejected. It is still your turn. \n"; play_game (parse_thunk ())s
+  | Reject -> helper_string "Draw rejected. It is still your turn. \n"; play_game (parse_thunk ()) s false
   | exception Malformed -> helper_string "Invalid Command. Try again.\n"; accept_or_reject s
   | exception Empty -> helper_string "Empty Command. Try again.\n"; accept_or_reject s
-  | Start| Quit| Score| Draw| Moves| Opponent _ |Move _ |Rematch| SameDiff _|HostClient _
+  | Start| Quit| Score| Draw| Moves| Opponent _ | Move _ |Rematch| SameDiff _| HostClient _
     -> helper_string "You must accept or reject the draw"; accept_or_reject s
 
 let receive fd =
@@ -98,23 +103,23 @@ let rec host_client_play fd str st =
         let sent = send_substring fd str 0 (String.length str) [] in
         if sent < String.length str then (print_string "The whole command did not send. There is probably a bug")
         else (host_client_play fd (read_line ()) st);
-      | Illegal -> helper_string "Illegal move. Try again.\n"; play_game (parse_thunk ())st
+      | Illegal -> helper_string "Illegal move. Try again.\n"; play_game (parse_thunk ()) st false
       | Win c when c = Black -> 
         helper_string "Game Over. Black Wins! \n  Quit or Rematch? \n"; ()
       | Win c when c = Red -> 
         helper_string "Game Over. Red Wins! \n  Quit or Rematch? \n"; ()
       | Win _ -> failwith "BUG in play_game, Win match!"
     end
-  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
-  | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game (parse_thunk ())st
+  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ()) st false
+  | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game (parse_thunk ()) st false
   | Score -> print_float (get_eval st); 
-    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ())st
+    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ()) st false 
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
     accept_or_reject st;
   | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
-  | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; play_game (parse_thunk ())st
+  | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; play_game (parse_thunk ()) st false
   | Opponent _ | Start| Accept | Reject | HostClient _ | SameDiff _ 
-    -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
+    -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ()) st false 
 
 let listen_accept fd =
   listen fd 1;
@@ -229,14 +234,16 @@ let start_menu() =
     if same_diff = Same then (
       print_board (new_game ()).pieces;
       (helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; 
-       play_game (parse_thunk ()) (new_game ())))
+       play_game (parse_thunk ()) (new_game ()))) false 
     else (
       ANSITerminal.(print_string [red] "Do you want to be the host or client?\n");
       let host_client = menu_5 (parse_thunk) in
       if host_client = Host then host () else client ()
     ))
-  else failwith "AI version not implemented";
-  menu_3(parse_thunk) 
+  else print_board (new_game ()).pieces;
+  helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; 
+  play_game (parse_thunk ()) (new_game ()) true
+(* menu_3(parse_thunk)  *)
 
 (** [main ()] prints the prompt for the game to play, then starts it. *)
 let main () =
