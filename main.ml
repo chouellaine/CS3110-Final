@@ -84,7 +84,7 @@ and accept_or_reject s =
     -> helper_string "You must accept or reject the draw"; accept_or_reject s
 
 let receive fd =
-  ANSITerminal.(print_string [red] "Waiting for your opponent to make a move'\n"); 
+  ANSITerminal.(print_string [red] "Waiting for your opponent to make a move\n"); 
   Pervasives.print_newline ();
   let msg = Bytes.create 64 in
   match Unix.recv fd msg 0 64 [] with
