@@ -7,16 +7,19 @@ let rec minimax st depth =
     else if s.turn mod 2 = 1 then 
       let max_eval_combiner = 
         fun acc el -> 
-          let res = mm_helper (update_state s el) (d-1) (el::c_path) (if d = depth then c_path else mvs) in 
+          let res = mm_helper (update_state s el) (d-1) (el::c_path) (if d = depth-1 then c_path else mvs) in 
           if (fst res) >= (fst acc) then res else acc in 
       List.fold_left max_eval_combiner (neg_infinity, []) (get_all_moves s)
     else 
       let min_eval_combiner = 
         fun acc el -> 
-          let res = mm_helper (update_state s el) (d-1) (el::c_path) (if d = depth then c_path else mvs) in 
+          let res = mm_helper (update_state s el) (d-1) (el::c_path) (if d = depth-1 then c_path else mvs) in 
           if (fst res) <= (fst acc) then res else acc in 
       List.fold_left min_eval_combiner (infinity, []) (get_all_moves s)
   in mm_helper st depth [] []
+
+let get_sugg_mv st depth = 
+  List.hd (snd (minimax st depth))   
 
 
 
