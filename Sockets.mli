@@ -1,3 +1,7 @@
-val init_with_socket_host : unit -> unit
+type os = Apple | Other
 
-val init_with_socket_client : unit -> unit
+val find_port : Unix.file_descr -> int
+
+val echo : string -> unit
+
+val env : unit -> os

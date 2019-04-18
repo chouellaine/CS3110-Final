@@ -1,6 +1,7 @@
 open State
 open Command
 open Sockets
+open Unix
 
 (*   Game Infrastucture:
 
@@ -44,40 +45,107 @@ let helper_string str =
     - Prompting the user again if an illegal move is made or an unrecognized 
       command is issued
 *)
-let rec play_game s = 
-  match parse_thunk() with 
-  | Moves -> pp_move_lst (get_all_moves s) ; 
-    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game s
+let rec play_game str st = 
+  match str with 
+  | Moves -> pp_move_lst (get_all_moves st) ; 
+    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ())st
   | Move m -> 
-    begin match move s m with 
-      | Legal s' -> print_board s'.pieces; 
-        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game s'
-      | Illegal -> helper_string "Illegal move. Try again.\n"; play_game s
+    begin match move st m with 
+      | Legal st' -> print_board st'.pieces; 
+        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ()) st'
+      | Illegal -> helper_string "Illegal move. Try again.\n"; play_game (parse_thunk ())st
       | Win c when c = Black -> 
         helper_string "Game Over. Black Wins! \n  Quit or Rematch? \n"; ()
       | Win c when c = Red -> 
         helper_string "Game Over. Red Wins! \n  Quit or Rematch? \n"; ()
       | Win _ -> failwith "BUG in play_game, Win match!"
     end
-  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game s
-  | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game s
-  | Score -> print_int (get_score s); 
-    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game s
+  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
+  | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game (parse_thunk ())st
+  | Score -> print_int (get_score st); 
+    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ())st
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
-    accept_or_reject s;
+    accept_or_reject st;
   | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
-  | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; play_game s
-  | Opponent _ | Start| Accept | Reject -> helper_string "Invalid Command. Try again.\n"; play_game s
+  | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; play_game (parse_thunk ())st
+  | Opponent _ | Start| Accept | Reject|HostClient _|SameDiff _ 
+    -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
 
 and accept_or_reject s =
   match parse_thunk() with
   | Accept -> helper_string "Draw accepted. The game has been drawn.\n Quit or Rematch? \n"; 
     () 
-  | Reject -> helper_string "Draw rejected. It is still your turn. \n"; play_game s
+  | Reject -> helper_string "Draw rejected. It is still your turn. \n"; play_game (parse_thunk ())s
   | exception Malformed -> helper_string "Invalid Command. Try again.\n"; accept_or_reject s
   | exception Empty -> helper_string "Empty Command. Try again.\n"; accept_or_reject s
   | Start| Quit| Score| Draw| Moves| Opponent _ |Move _ |Rematch| SameDiff _|HostClient _
     -> helper_string "You must accept or reject the draw"; accept_or_reject s
+
+let receive fd =
+  let msg = Bytes.create 64 in
+  match Unix.recv fd msg 0 64 [] with
+  | len -> Bytes.of_string (String.sub (Bytes.to_string msg) 0 len)
+
+let rec host_client_play fd str st =
+  match parse str with 
+  | Moves -> pp_move_lst (get_all_moves st) ; 
+    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; 
+    host_client_play fd (read_line ()) st
+  | Move m -> 
+    begin match move st m with 
+      | Legal st' -> print_board st'.pieces; 
+        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; 
+        let sent = send_substring fd str 0 (String.length str) [] in
+        if sent < String.length str then (print_string "The whole command did not send. There is probably a bug")
+        else (host_client_play fd (read_line ()) st);
+      | Illegal -> helper_string "Illegal move. Try again.\n"; play_game (parse_thunk ())st
+      | Win c when c = Black -> 
+        helper_string "Game Over. Black Wins! \n  Quit or Rematch? \n"; ()
+      | Win c when c = Red -> 
+        helper_string "Game Over. Red Wins! \n  Quit or Rematch? \n"; ()
+      | Win _ -> failwith "BUG in play_game, Win match!"
+    end
+  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
+  | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game (parse_thunk ())st
+  | Score -> print_int (get_score st); 
+    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ())st
+  | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
+    accept_or_reject st;
+  | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
+  | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; play_game (parse_thunk ())st
+  | Opponent _ | Start| Accept | Reject | HostClient _ | SameDiff _ 
+    -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
+
+let listen_accept fd =
+  listen fd 1;
+  echo "Please give your IP Address and this port number to your opponent: \n";
+  echo "Your IP Address: ";
+  let code = 
+    (if env () = Apple then system 
+         "ifconfig en0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'"
+     else system "ifconfig eth0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'")
+  in
+  echo "";
+  if code = WEXITED 0 then (echo ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");)
+  else (echo "We couldn't find your IP Address. You will have to find it manually.\n");
+  echo "Waiting for opponent to connect...";
+  let (conn_fd, sockaddr) = Unix.accept fd in
+  host_client_play conn_fd (Bytes.to_string (receive conn_fd)) (new_game ())
+
+let conn fd = 
+  print_string "Please enter your opponent's IP Address:\n";
+  let ip = read_line () in
+  print_string "Please enter the port number to connect to on your opponents machine:\n";
+  let port = read_line () in
+  let conn_addr = Unix.ADDR_INET(Unix.inet_addr_of_string ip,int_of_string port) in
+  Unix.connect fd conn_addr;
+  host_client_play fd (read_line ()) (new_game ())
+
+let init_with_socket_host () =
+  listen_accept (socket PF_INET SOCK_STREAM 0)
+
+let init_with_socket_client () =
+  conn (socket PF_INET SOCK_STREAM 0)
 
 let host () = 
   init_with_socket_host ()
@@ -146,7 +214,7 @@ let rec menu_1 a =
       menu_1 (parse_thunk);
   end 
 
-let play_game() = 
+let start_menu() = 
   ANSITerminal.(print_string [red]
                   "\n\nWelcome to CHECKERS! \n 
     Please enter 'Start' or 'Quit' to move forward. \n > \n");
@@ -161,7 +229,7 @@ let play_game() =
     if same_diff = Same then (
       print_board (new_game ()).pieces;
       (helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; 
-       play_game (new_game ())))
+       play_game (parse_thunk ()) (new_game ())))
     else (
       ANSITerminal.(print_string [red] "Do you want to be the host or client?\n");
       let host_client = menu_5 (parse_thunk) in
@@ -172,8 +240,8 @@ let play_game() =
 
 (** [main ()] prints the prompt for the game to play, then starts it. *)
 let main () =
-  try play_game()
-  with Restart -> play_game()
+  try start_menu ()
+  with Restart -> start_menu()
 
 (* Execute the game engine. *)
 let () = main()
