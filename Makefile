@@ -19,13 +19,6 @@ test:
 play:
 	$(OCAMLBUILD) $(MAIN) && ./$(MAIN)
 
-check:
-	bash checkenv.sh && bash checktypes.sh
-
-finalcheck: check
-	bash checkzip.sh
-	bash finalcheck.sh
-
 zip:
 	zip checkers.zip *.ml* _tags Makefile
 
