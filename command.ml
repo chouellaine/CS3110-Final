@@ -1,5 +1,7 @@
 type action = (int*int) list 
 type ptype = Player | AI 
+type sd = Same | Different
+type hc = Host | Client 
 
 type command = 
   | Start
@@ -9,6 +11,8 @@ type command =
   | Moves
   | Accept
   | Reject 
+  | HostClient of hc
+  | SameDiff of sd
   | Opponent of ptype
   | Move of action
   | Rematch 
@@ -73,6 +77,16 @@ let read_cmd = function
   | h :: t when String.lowercase_ascii h = "player" -> raise Malformed
   | h :: [] when String.lowercase_ascii h = "ai" -> Opponent (AI)
   | h :: t when String.lowercase_ascii h = "ai" -> raise Malformed
+  | h :: [] when String.lowercase_ascii h = "quit" -> Quit
+  | h :: t when String.lowercase_ascii h = "quit" -> raise Malformed
+  | h :: [] when String.lowercase_ascii h = "same" -> SameDiff Same
+  | h :: t when String.lowercase_ascii h = "same" -> raise Malformed
+  | h :: [] when String.lowercase_ascii h = "different" -> SameDiff Different
+  | h :: t when String.lowercase_ascii h = "different" -> raise Malformed
+  | h :: [] when String.lowercase_ascii h = "host" -> HostClient Host
+  | h :: t when String.lowercase_ascii h = "host" -> raise Malformed
+  | h :: [] when String.lowercase_ascii h = "client" -> HostClient Client
+  | h :: t when String.lowercase_ascii h = "client" -> raise Malformed
   | h :: [] when String.lowercase_ascii h = "move" -> raise Malformed 
   | h :: _ :: [] when String.lowercase_ascii h = "move" -> raise Malformed
   | h :: t  when String.lowercase_ascii h = "move" -> Move (List.map convert_coord t)

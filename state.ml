@@ -221,22 +221,28 @@ let update_piece_list piece_lst mv =
   let updated_list = remove_pieces remove_lst piece_lst [] in 
   new_piece :: updated_list
 
+let update_state st mv = 
+  {pieces = update_piece_list st.pieces mv; turn = st.turn + 1}
+
 let move st mv = 
   if List.mem mv (get_all_moves st) then 
-    let st' = {pieces = update_piece_list st.pieces mv; turn = st.turn + 1} in 
-    Legal st'
+    Legal (update_state st mv)
   else if List.length(get_all_moves st) = 0 then 
     let color = if st.turn mod 2 = 0 then Black else Red in
     Win color
   else Illegal 
 
-let get_score st = 
-  let rec helper acc = function
-    | [] -> acc
-    | K (color, _)::t 
-    | P (color, _)::t -> 
-      if color = Black then helper (acc + 1) t else  helper (acc - 1) t
-  in helper 0 st.pieces
+let get_eval st = 
+  if (List.length st.pieces) = 0 then 
+    if st.turn mod 2 = 0 then neg_infinity else infinity
+  else 
+    let rec helper acc = function
+      | [] -> acc
+      | K (color, _)::t -> 
+        if color = Black then helper (acc +. 5.) t else  helper (acc -. 5.) t
+      | P (color, _)::t -> 
+        if color = Black then helper (acc +. 3.) t else  helper (acc -. 3.) t
+    in helper 0. st.pieces
 
 (** [print_row] prints the checkerboard. *)
 let print_row coords subrow piece=

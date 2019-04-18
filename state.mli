@@ -32,10 +32,15 @@ val get_all_moves : t -> ((int * int) list) list
 
 (** [get_score st points] gets the current number of black pieces minus the 
     current number of red pieces. *)
-val get_score : t -> int
+val get_eval : t -> float
 
 (** The type representing the result of an attempted move. *)
 type result = Legal of t | Illegal | Win of color
+
+(** [update_state st mv] is the state resulting from making the move [mv] 
+    Requires: [mv] is a legal move
+*)
+val update_state : t -> (int * int) list -> t
 
 (** [move st mv] is the result of attempting to make the move specified by [mv]
     If the move is legal, then the result is [Legal st'] where [st'] is the 
