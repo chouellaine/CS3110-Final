@@ -62,7 +62,7 @@ let rec play_game str st =
     end
   | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
   | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game (parse_thunk ())st
-  | Score -> print_int (get_score st); 
+  | Score -> print_float (get_eval st); 
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ())st
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
     accept_or_reject st;
@@ -107,7 +107,7 @@ let rec host_client_play fd str st =
     end
   | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ())st
   | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game (parse_thunk ())st
-  | Score -> print_int (get_score st); 
+  | Score -> print_float (get_eval st); 
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ())st
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
     accept_or_reject st;
