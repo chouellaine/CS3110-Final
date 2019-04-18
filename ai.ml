@@ -1,6 +1,6 @@
 open State
 
-let rec minimax st depth = 
+let minimax st depth = 
   let rec mm_helper s d c_path = 
     if d = 0 || (List.length (get_all_moves s) = 0) then 
       ((get_eval s), List.rev c_path)
@@ -17,6 +17,31 @@ let rec minimax st depth =
           if (fst res) <= (fst acc) then res else acc in 
       List.fold_left min_eval_combiner (infinity, []) (get_all_moves s)
   in mm_helper st depth []
+
+let pruned_minimax st depth = 
+  let rec pmm_helper s d alpha beta = 
+    if d = 0 || (List.length (get_all_moves s) = 0) then get_eval s
+    else if s.turn mod 2 = 1 then 
+      let max_val = ref neg_infinity in 
+      let rec update_max_vals mv_lst = 
+        match mv_lst with 
+        | [] -> () 
+        | h::t -> 
+          max_val := (max !max_val (pmm_helper (update_state s h) (d-1) alpha beta));
+          alpha := (max !alpha !max_val);
+          if !alpha <= !beta then (update_max_vals t) else ()
+      in update_max_vals (get_all_moves s); !max_val
+    else 
+      let min_val = ref infinity in 
+      let rec update_min_vals mv_lst = 
+        match mv_lst with 
+        | [] -> () 
+        | h::t -> 
+          min_val := (min !min_val (pmm_helper (update_state s h) (d-1) alpha beta));
+          alpha := (min !alpha !min_val);
+          if !alpha <= !beta then (update_min_vals t) else ()
+      in update_min_vals (get_all_moves s); !min_val
+  in pmm_helper st depth (ref neg_infinity) (ref infinity)
 
 let get_sugg_mv st depth = 
   let mv_lst = snd (minimax st depth) in

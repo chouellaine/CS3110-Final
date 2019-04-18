@@ -15,3 +15,10 @@ val minimax : t -> int -> (float * ((int*int) list) list)
 *)
 val get_sugg_mv : t -> int -> (int*int) list  
 
+(* [pruned_minimax st depth curr_path sugg_mvs] is the best evaluation for the 
+   current player and the move sequence recommended given the game specified by 
+   state [st]. The minimax algorithm searches up to [depth] moves ahead, and 
+   uses the alpha beta pruning optimization. 
+*)
+val pruned_minimax : t -> int -> (float * ((int*int) list) list)
+
