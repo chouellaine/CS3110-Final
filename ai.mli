@@ -20,5 +20,5 @@ val get_sugg_mv : t -> int -> (int*int) list
    state [st]. The minimax algorithm searches up to [depth] moves ahead, and 
    uses the alpha beta pruning optimization. 
 *)
-val pruned_minimax : t -> int -> (float * ((int*int) list) list)
+val pruned_minimax : t -> int -> float
 

@@ -89,13 +89,6 @@ and accept_or_reject s =
   | Start| Quit| Score| Draw| Moves| Opponent _ | Move _ |Rematch| SameDiff _| HostClient _
     -> helper_string "You must accept or reject the draw"; accept_or_reject s
 
-let receive fd =
-  ANSITerminal.(print_string [red] "Waiting for your opponent to make a move\n"); 
-  Pervasives.print_newline ();
-  let msg = Bytes.create 64 in
-  match Unix.recv fd msg 0 64 [] with
-  | len -> Bytes.of_string (String.sub (Bytes.to_string msg) 0 len)
-
 let rec host_client_play fd str st = 
   Pervasives.print_newline ();
   match parse str with 
@@ -118,16 +111,26 @@ let rec host_client_play fd str st =
         helper_string "Game Over. Red Wins! \n  Quit or Rematch? \n"; ()
       | Win _ -> failwith "BUG in play_game, Win match!"
     end
-  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; play_game (parse_thunk ()) st false
-  | exception Empty -> helper_string "Empty Command. Try again.\n"; play_game (parse_thunk ()) st false
+  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; host_client_play fd (read_line ()) st
+  | exception Empty -> helper_string "Empty Command. Try again.\n"; host_client_play fd (read_line ()) st
   | Score -> print_float (get_eval st); 
-    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; play_game (parse_thunk ()) st false 
+    helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'"; host_client_play fd (read_line ()) st
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n";
     accept_or_reject st;
   | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
   | Rematch -> helper_string "Cannnot rematch. Must quit or ask for draw. \n"; host_client_play fd (read_line ()) st
   | Opponent _ | Start| Accept | Reject | HostClient _ | SameDiff _ 
     -> helper_string "Invalid Command. Try again.\n"; host_client_play fd (read_line ()) st
+
+and hc_accept_or_reject fd s =
+  match parse_thunk() with
+  | Accept -> helper_string "Draw accepted. The game has been drawn.\n Quit or Rematch? \n"; 
+    () 
+  | Reject -> helper_string "Draw rejected. It is still your turn. \n"; host_client_play fd (read_line ()) s
+  | exception Malformed -> helper_string "Invalid Command. Try again.\n"; hc_accept_or_reject fd s
+  | exception Empty -> helper_string "Empty Command. Try again.\n"; hc_accept_or_reject fd s
+  | Start| Quit| Score| Draw| Moves| Opponent _ | Move _ |Rematch| SameDiff _| HostClient _
+    -> helper_string "You must accept or reject the draw"; hc_accept_or_reject fd s
 
 and update fd str st = 
   begin
@@ -157,26 +160,19 @@ let listen_accept fd =
   if code = WEXITED 0 then (echo ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");)
   else (echo "We couldn't find your IP Address. You will have to find it manually.\n");
   echo "Waiting for opponent to connect...";
-  let (conn_fd, sockaddr) = Unix.accept fd in
+  accept fd
+
+let host () = 
+  let conn_fd,sockaddr = listen_accept (socket PF_INET SOCK_STREAM 0) in
   print_board (new_game ()).pieces;
   helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'";
   Pervasives.print_newline ();
   host_client_play conn_fd (read_line ()) (new_game ())
 
-let conn fd = 
-  print_string "Please enter your opponent's IP Address:\n";
-  let ip = read_line () in
-  print_string "Please enter the port number to connect to on your opponents machine:\n";
-  let port = read_line () in
-  let conn_addr = Unix.ADDR_INET(Unix.inet_addr_of_string ip,int_of_string port) in
-  (print_board (new_game ()).pieces; Pervasives.print_newline () ;Unix.connect fd conn_addr);
-  update fd (Bytes.to_string (receive fd)) (new_game ())
-
-let host () = 
-  listen_accept (socket PF_INET SOCK_STREAM 0)
-
 let client () = 
-  conn (socket PF_INET SOCK_STREAM 0)
+  let fd = socket PF_INET SOCK_STREAM 0 in
+  conn fd;
+  update fd (Bytes.to_string (receive fd)) (new_game ())
 
 let rec menu_5 a=
   begin
