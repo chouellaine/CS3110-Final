@@ -257,17 +257,17 @@ let print_row coords subrow piece=
     | _, 5, Some K (Red, (x,y)) | _, 5, Some K (Black, (x,y)) when (x+y) mod 2=0 
       -> ANSITerminal.(print_string [on_black] "          ");
     | _, 2, Some P (Black, c) | _, 2, Some K (Black, c)
-      -> ANSITerminal.(print_string [on_black] "  /");
+      -> ANSITerminal.(print_string [on_black;white] "  /");
       ANSITerminal.(print_string [on_white] "    ");
-      ANSITerminal.(print_string [on_black] "\\  ");
+      ANSITerminal.(print_string [on_black;white] "\\  ");
     | _, 2, Some P (Red, c) | _, 2, Some K (Red, c)
       -> ANSITerminal.(print_string [on_black;magenta] "  /");
       ANSITerminal.(print_string [on_magenta] "    ");
       ANSITerminal.(print_string [on_black;magenta] "\\  ");
     | _, 3, Some P (Black, c) | _, 3, Some K (Black, c)
-      -> ANSITerminal.(print_string [on_black] "  ");
+      -> ANSITerminal.(print_string [on_black;white] "  ");
       ANSITerminal.(print_string [on_white] "      ");
-      ANSITerminal.(print_string [on_black] "  ");
+      ANSITerminal.(print_string [on_black;white] "  ");
     | _, 3, Some P (Red, c) | _, 3, Some K (Red, c)
       -> ANSITerminal.(print_string [on_black] "  ");
       ANSITerminal.(print_string [on_magenta] "      ");

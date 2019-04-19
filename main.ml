@@ -172,17 +172,11 @@ let conn fd =
   (print_board (new_game ()).pieces; Pervasives.print_newline () ;Unix.connect fd conn_addr);
   update fd (Bytes.to_string (receive fd)) (new_game ())
 
-let init_with_socket_host () =
+let host () = 
   listen_accept (socket PF_INET SOCK_STREAM 0)
 
-let init_with_socket_client () =
-  conn (socket PF_INET SOCK_STREAM 0)
-
-let host () = 
-  init_with_socket_host ()
-
 let client () = 
-  init_with_socket_client ()
+  conn (socket PF_INET SOCK_STREAM 0)
 
 let rec menu_5 a=
   begin
