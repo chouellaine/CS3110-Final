@@ -1,6 +1,7 @@
 open Unix
 open State
 open Command
+open Pervasives
 
 type os = Apple | Other
 
@@ -10,13 +11,6 @@ let find_port fd =
     | Unix.ADDR_INET (_, port) -> port
     | _ -> failwith "whatever"
   end
-
-let echo s =
-  let code = match system ("echo '" ^ s ^ "'") with 
-    | WEXITED c -> c
-    | _ -> failwith "Process killed/stopped" in
-  if code <> 0 then failwith ("Failed with code " ^ string_of_int code)
-  else ()
 
 let env () = 
   match getenv "TERM_PROGRAM" with
@@ -32,17 +26,17 @@ let receive fd =
 
 let listen_accept fd =
   listen fd 1;
-  echo "Please give your IP Address and this port number to your opponent: \n";
-  echo "Your IP Address: ";
+  print_string "Please give your IP Address and this port number to your opponent: \n";
+  print_endline "Your IP Address: ";
   let code = 
     (if env () = Apple then system 
          "ifconfig en0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'"
      else system "ifconfig eth0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'")
   in
-  echo "";
-  if code = WEXITED 0 then (echo ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");)
-  else (echo "We couldn't find your IP Address. You will have to find it manually.\n");
-  echo "Waiting for opponent to connect...";
+  print_newline ();
+  if code = WEXITED 0 then (print_string ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");)
+  else (print_string "We couldn't find your IP Address. You will have to find it manually.\n");
+  print_endline "Waiting for opponent to connect...";
   accept fd
 
 let conn fd = 
