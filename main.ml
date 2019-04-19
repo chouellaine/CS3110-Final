@@ -147,21 +147,6 @@ and update fd str st =
     | _ -> failwith "command should be a move if it gets to [update]"
   end
 
-let listen_accept fd =
-  listen fd 1;
-  echo "Please give your IP Address and this port number to your opponent: \n";
-  echo "Your IP Address: ";
-  let code = 
-    (if env () = Apple then system 
-         "ifconfig en0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'"
-     else system "ifconfig eth0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'")
-  in
-  echo "";
-  if code = WEXITED 0 then (echo ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");)
-  else (echo "We couldn't find your IP Address. You will have to find it manually.\n");
-  echo "Waiting for opponent to connect...";
-  accept fd
-
 let host () = 
   let conn_fd,sockaddr = listen_accept (socket PF_INET SOCK_STREAM 0) in
   print_board (new_game ()).pieces;
