@@ -49,6 +49,7 @@ type command =
   | Opponent of ptype
   | Move of action
   | Rematch
+  | StartOver
 
 (** Raised when an empty command is parsed. *)
 exception Empty
