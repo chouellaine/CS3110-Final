@@ -370,6 +370,7 @@ let rec start_menu = function
     else if t = Client then try play_client() with Restart -> main()
 
 and  main () =
+  ANSITerminal.resize 150 50;
   try start_menu None
   with 
   | Restart -> start_menu None 
