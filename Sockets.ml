@@ -15,6 +15,7 @@ let find_port fd =
 let env () = 
   match getenv "TERM_PROGRAM" with
   | "Apple_Terminal" -> Apple
+  | exception Not_found -> Other
   | _ -> Other
 
 let receive fd =
