@@ -122,6 +122,7 @@ let rec host_client_play fd str st =
   | Opponent _ | Start| Accept | Reject | HostClient _ | SameDiff _ 
     -> helper_string "Invalid Command. Try again.\n"; host_client_play fd (read_line ()) st
 
+(* TODO: Make compatible with host-client *)
 and hc_accept_or_reject fd s =
   match parse_thunk() with
   | Accept -> helper_string "Draw accepted. The game has been drawn.\n Quit or Rematch? \n"; 

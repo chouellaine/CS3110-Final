@@ -273,9 +273,9 @@ let print_row coords subrow piece=
       ANSITerminal.(print_string [on_magenta] "      ");
       ANSITerminal.(print_string [on_black] "  ");
     | _, 4, Some P (Black, c) | _, 4, Some K (Black, c)
-      -> ANSITerminal.(print_string [on_black] "  \\");
+      -> ANSITerminal.(print_string [on_black;white] "  \\");
       ANSITerminal.(print_string [on_white] "    ");
-      ANSITerminal.(print_string [on_black] "/  ");
+      ANSITerminal.(print_string [on_black;white] "/  ");
     | _, 4, Some P (Red, c) | _, 4, Some K (Red, c)
       -> ANSITerminal.(print_string [on_black;magenta] "  \\");
       ANSITerminal.(print_string [on_magenta] "    ");
