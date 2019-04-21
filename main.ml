@@ -63,23 +63,24 @@ let rec play_game str st ai =
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
     play_game (parse_thunk) st ai
   | Move m -> 
-    begin match move st m with 
-      | Legal st' when not ai -> print_board st'.pieces; 
-        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-        play_game (parse_thunk) st' ai
-      | Legal st' when ai -> let st'' = (update_state st' (get_sugg_mv st' 7)) 
-        in print_board st''.pieces; 
-        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-        play_game (parse_thunk) st'' ai
-      | Legal st' -> failwith "ai was not set to true or false???" 
-      | Illegal -> helper_string "Illegal move. Try again.\n>"; 
-        play_game (parse_thunk) st ai 
-      | Win c when c = Black -> 
-        helper_string "Game Over. Black Wins! \n  Quit or Rematch?\n>"; ()
-      | Win c when c = Red -> 
-        helper_string "Game Over. Red Wins! \n  Quit or Rematch?\n>"; ()
-      | Win _ -> failwith "BUG in play_game, Win match!"
-    end
+    if st.moves_without_capture = 39 then helper_string "40 moves were made without progression by either side. The game is a draw." else 
+      begin match move st m with 
+        | Legal st' when not ai -> print_board st'.pieces; 
+          helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
+          play_game (parse_thunk) st' ai
+        | Legal st' when ai -> let st'' = (update_state st' (get_sugg_mv st' 7 get_eval_suicide)) 
+          in print_board st''.pieces; 
+          helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
+          play_game (parse_thunk) st'' ai
+        | Legal st' -> failwith "ai was not set to true or false???" 
+        | Illegal -> helper_string "Illegal move. Try again.\n>"; 
+          play_game (parse_thunk) st ai 
+        | Win c when c = Black -> 
+          helper_string "Game Over. Black Wins! \n  Quit or Rematch?\n>"; ()
+        | Win c when c = Red -> 
+          helper_string "Game Over. Red Wins! \n  Quit or Rematch?\n>"; ()
+        | Win _ -> failwith "BUG in play_game, Win match!"
+      end
   | exception Malformed -> helper_string "Invalid Command. Try again.\n>"; 
     play_game (parse_thunk)st ai 
   | exception Empty -> helper_string "Empty Command. Try again.\n>"; 
@@ -92,9 +93,9 @@ let rec play_game str st ai =
   | Quit -> helper_string "Peace out homie."; Pervasives.exit 0
   | Rematch -> helper_string "Starting a new game."; 
     if ai then raise Rematch_AI else raise Rematch_Same 
-  | StartOver -> helper_string"Restarting Checkers.";
+  | StartOver -> helper_string "Restarting Checkers.";
     raise Restart
-  | Opponent _ | Start| Accept | Reject |HostClient _ |SameDiff _ 
+  | Opponent _ | Start | Accept | Reject | HostClient _ | SameDiff _ 
     -> helper_string "other cmd, Invalid Command. Try again.\n>"; play_game (parse_thunk) st ai
 
 and accept_or_reject ai s =
@@ -109,7 +110,7 @@ and accept_or_reject ai s =
     accept_or_reject ai s
   | StartOver -> raise Restart
   | Start| Quit| Score| Draw| Moves| Opponent _ 
-  | Move _ |Rematch |SameDiff _| HostClient _ 
+  | Move _ | Rematch | SameDiff _| HostClient _ 
     -> helper_string "You must accept or reject the draw.\n>"; accept_or_reject ai s
 
 let rec host_client_play fd str st = 

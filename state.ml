@@ -9,6 +9,7 @@ type piece =
 type t = {
   pieces: piece list;
   turn: int; 
+  moves_without_capture: int; 
 }
 
 (** The type representing the result of an attempted move. *)
@@ -50,6 +51,7 @@ let new_game () =
       P (Red,(8,6))
     ];
     turn = 1; 
+    moves_without_capture = 0; 
   }
 
 (** [in bounds coords] is whether [coords] is in bounds of the board. *)
@@ -222,7 +224,11 @@ let update_piece_list piece_lst mv =
   new_piece :: updated_list
 
 let update_state st mv = 
-  {pieces = update_piece_list st.pieces mv; turn = st.turn + 1}
+  let new_pieces = update_piece_list st.pieces mv in 
+  {pieces = new_pieces; turn = st.turn + 1; 
+   moves_without_capture = if List.((length new_pieces) = (length st.pieces)) 
+     then (st.moves_without_capture + 1) else 0
+  } 
 
 let move st mv = 
   if List.mem mv (get_all_moves st) then 
@@ -239,10 +245,15 @@ let get_eval st =
     let rec helper acc = function
       | [] -> acc
       | K (color, _)::t -> 
-        if color = Black then helper (acc +. 5.) t else  helper (acc -. 5.) t
+        if color = Black then helper (acc +. 5.) t 
+        else  helper (acc -. 5.) t
       | P (color, _)::t -> 
-        if color = Black then helper (acc +. 3.) t else  helper (acc -. 3.) t
+        if color = Black then helper (acc +. 3.) t 
+        else  helper (acc -. 3.) t
     in helper 0. st.pieces
+
+let get_eval_suicide st = 
+  -1. *. (get_eval st)
 
 (** [print_row] prints the checkerboard. *)
 let print_row coords subrow piece=
