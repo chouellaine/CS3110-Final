@@ -26,12 +26,6 @@ let find_port fd =
     | _ -> failwith "whatever"
   end
 
-let env () = 
-  match getenv "TERM_PROGRAM" with
-  | "Apple_Terminal" -> Apple
-  | exception Not_found -> Other
-  | _ -> Other
-
 let receive fd =
   ANSITerminal.(print_string [red] "Waiting for your opponent to make a move\n"); 
   Pervasives.print_newline ();
@@ -48,14 +42,23 @@ let listen_accept fd =
   listen fd 5;
   print_string "Please give your IP Address and this port number to your opponent: \n";
   print_endline "Your IP Address: ";
-  let code = 
-    (if env () = Apple then system 
-         "ifconfig en0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'"
-     else system "ifconfig eth0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'")
+  let code = system 
+      "ifconfig en0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'"
   in
+  begin
+    match code with
+    | WEXITED 0 -> print_newline (); print_string ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");
+    | WEXITED 1 -> print_endline "Trying this instead. \nYour IP Address:";
+      let code2 = system "ifconfig eth0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'" in
+      print_newline ();
+      begin
+        match code2 with
+        | WEXITED 0 -> print_newline (); print_string ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");
+        | _ -> print_string "We couldn't find your IP Address. You will have to find it manually.\n";
+      end
+    | _ -> print_string "We couldn't find your IP Address. You will have to find it manually.\n";
+  end;
   print_newline ();
-  if code = WEXITED 0 then (print_string ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");)
-  else (print_string "We couldn't find your IP Address. You will have to find it manually.\n");
   print_endline "Waiting for opponent to connect...";
   accept fd
 
