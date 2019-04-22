@@ -65,23 +65,24 @@ let rec play_game str st ai =
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
     play_game (parse_thunk) st ai
   | Move m -> 
-    begin match move st m with 
-      | Legal st' when not ai -> print_board st'.pieces; 
-        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-        play_game (parse_thunk) st' ai
-      | Legal st' when ai -> let st'' = (update_state st' (get_sugg_mv st' 7)) 
-        in print_board st''.pieces; 
-        helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-        play_game (parse_thunk) st'' ai
-      | Legal st' -> failwith "ai was not set to true or false???" 
-      | Illegal -> helper_string "Illegal move. Try again.\n>"; 
-        play_game (parse_thunk) st ai 
-      | Win c when c = Black -> 
-        helper_string "Game Over. Black Wins! \n  Quit or Rematch?\n>"; ()
-      | Win c when c = Red -> 
-        helper_string "Game Over. Red Wins! \n  Quit or Rematch?\n>"; ()
-      | Win _ -> failwith "BUG in play_game, Win match!"
-    end
+    if st.moves_without_capture = 39 then helper_string "40 moves were made without progression by either side. The game is a draw." else 
+      begin match move st m with 
+        | Legal st' when not ai -> print_board st'.pieces; 
+          helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
+          play_game (parse_thunk) st' ai
+        | Legal st' when ai -> let st'' = (update_state st' (get_sugg_mv st' 7 get_eval_suicide)) 
+          in print_board st''.pieces; 
+          helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
+          play_game (parse_thunk) st'' ai
+        | Legal st' -> failwith "ai was not set to true or false???" 
+        | Illegal -> helper_string "Illegal move. Try again.\n>"; 
+          play_game (parse_thunk) st ai 
+        | Win c when c = Black -> 
+          helper_string "Game Over. Black Wins! \n  Quit or Rematch?\n>"; ()
+        | Win c when c = Red -> 
+          helper_string "Game Over. Red Wins! \n  Quit or Rematch?\n>"; ()
+        | Win _ -> failwith "BUG in play_game, Win match!"
+      end
   | exception Malformed -> helper_string "Invalid Command. Try again.\n>"; 
     play_game (parse_thunk)st ai 
   | exception Empty -> helper_string "Empty Command. Try again.\n>"; 
@@ -94,9 +95,9 @@ let rec play_game str st ai =
   | Quit -> helper_string "Peace out homie."; Pervasives.exit 0
   | Rematch -> helper_string "Starting a new game."; 
     if ai then raise Rematch_AI else raise Rematch_Same 
-  | StartOver -> helper_string"Restarting Checkers.";
+  | StartOver -> helper_string "Restarting Checkers.";
     raise Restart
-  | Opponent _ | Start| Accept | Reject |HostClient _ |SameDiff _ 
+  | Opponent _ | Start | Accept | Reject | HostClient _ | SameDiff _ 
     -> helper_string "other cmd, Invalid Command. Try again.\n>"; play_game (parse_thunk) st ai
 
 and accept_or_reject ai s =
@@ -111,15 +112,15 @@ and accept_or_reject ai s =
     accept_or_reject ai s
   | StartOver -> raise Restart
   | Start| Quit| Score| Draw| Moves| Opponent _ 
-  | Move _ |Rematch |SameDiff _| HostClient _ 
+  | Move _ | Rematch | SameDiff _| HostClient _ 
     -> helper_string "You must accept or reject the draw.\n>"; accept_or_reject ai s
 
-let rec host_client_play fd str st = 
+let rec host_client_play f_list fd str st = 
   Pervasives.print_newline ();
   match parse str with 
   | Moves -> pp_move_lst (get_all_moves st); 
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-    host_client_play fd (read_line ()) st
+    host_client_play f_list fd (read_line ()) st
   | Move m -> 
     begin 
       match move st m with 
@@ -127,11 +128,16 @@ let rec host_client_play fd str st =
         if sent < String.length str then 
           (print_string "The whole command did not send. There is probably a bug.")
         else (
+          begin
+            match f_list with 
+            | Some lst -> write_children lst str
+            | None -> ()
+          end;
           print_board st'.pieces;
           Pervasives.print_newline ();
-          update fd (Bytes.to_string (receive fd)) st')
+          update f_list fd (Bytes.to_string (receive fd)) st')
       | Illegal -> helper_string "Illegal move. Try again."; 
-        host_client_play fd (read_line ()) st
+        host_client_play f_list fd (read_line ()) st
       | Win c when c = Black -> 
         helper_string "Game Over. Black Wins! \n  Quit or Rematch?\n>"; ()
       | Win c when c = Red -> 
@@ -139,47 +145,68 @@ let rec host_client_play fd str st =
       | Win _ -> failwith "BUG in play_game, Win match!"
     end
   | exception Malformed -> helper_string "Invalid Command. Try again.\n>"; 
-    host_client_play fd (read_line ()) st
+    host_client_play f_list fd (read_line ()) st
   | exception Empty -> helper_string "Empty Command. Try again."; 
-    host_client_play fd (read_line ()) st
+    host_client_play f_list fd (read_line ()) st
   | Score -> print_float (get_eval st); 
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-    host_client_play fd (read_line ()) st
+    host_client_play f_list fd (read_line ()) st
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n>";
-    hc_accept_or_reject fd st;
+    hc_accept_or_reject f_list fd st;
   | Quit -> helper_string "Peace out homie.\n"; Pervasives.exit 0
   | StartOver -> raise Restart
   | Opponent _ | Start| Accept | Reject | HostClient _ | SameDiff _  |Rematch
     -> helper_string "Invalid Command. Try again.\n>"; 
-    host_client_play fd (read_line ()) st
+    host_client_play f_list fd (read_line ()) st
 
 (* TODO: Make compatible with host-client *)
-and hc_accept_or_reject fd s =
+and hc_accept_or_reject f_list fd s =
   match parse_thunk() with
   | Accept -> 
     helper_string "Draw accepted. The game has been drawn.\n Quit or Rematch?\n>"; () 
   | Reject -> helper_string "Draw rejected. It is still your turn.\n>"; 
-    host_client_play fd (read_line ()) s
+    host_client_play f_list fd (read_line ()) s
   | exception Malformed -> helper_string "Invalid Command. Try again.\n>";
-    hc_accept_or_reject fd s
+    hc_accept_or_reject f_list fd s
   | exception Empty -> helper_string "Empty Command. Try again.\n>"; 
-    hc_accept_or_reject fd s
+    hc_accept_or_reject f_list fd s
   | StartOver -> raise Restart
   | Start| Quit| Score| Draw| Moves| Opponent _ 
   | Move _ |Rematch| SameDiff _| HostClient _ 
     -> helper_string "You must accept or reject the draw.\n>"; 
-    hc_accept_or_reject fd s
+    hc_accept_or_reject f_list fd s
 
-and update fd str st = 
+and update f_list fd str st = 
   begin
     match parse str with
     | Move m ->
       begin
         match move st m with
-        | Legal st' -> print_board st'.pieces; 
+        | Legal st' -> 
+          begin
+            match f_list with 
+            | Some lst -> write_children lst str
+            | None -> ()
+          end;
+          print_board st'.pieces; 
           Pervasives.print_newline (); 
           helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>";
-          host_client_play fd (read_line ()) st'
+          host_client_play f_list fd (read_line ()) st'
+        | _ -> failwith "move should be legal if it gets to [update]"
+      end
+    | _ -> failwith "command should be a move if it gets to [update]"
+  end
+
+let rec spec_play fd str st = 
+  begin
+    match parse str with
+    | Move m ->
+      begin
+        match move st m with
+        | Legal st' -> 
+          print_board st'.pieces; 
+          Pervasives.print_newline (); 
+          spec_play fd (Bytes.to_string (spec_receive fd)) st'
         | _ -> failwith "move should be legal if it gets to [update]"
       end
     | _ -> failwith "command should be a move if it gets to [update]"
@@ -193,6 +220,7 @@ let rec get_json() =
     | j -> helper_init (from_json j)
     | exception _ -> helper_string "File Error, try again"; 
       print_string "> "; helper_start () 
+
 (**[menu_3] runs the game at Level Menu 3.*)
 let rec menu_3 a ai=
   begin
@@ -214,16 +242,23 @@ let rec menu_3 a ai=
   end
 
 let host () = 
-  let conn_fd,sockaddr = listen_accept (socket PF_INET SOCK_STREAM 0) in
+  let fd = socket PF_INET SOCK_STREAM 0 in
+  let conn_fd,sockaddr = listen_accept fd in
+  let f_list = init_spectators fd 4 in
   print_board (new_game ()).pieces;
   helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>";
   Pervasives.print_newline ();
-  host_client_play conn_fd (read_line ()) (new_game ()); menu_3 parse_thunk Host
+  host_client_play (Some f_list) conn_fd (read_line ()) (new_game ()); menu_3 parse_thunk Host
 
 let client () = 
   let fd = socket PF_INET SOCK_STREAM 0 in
-  conn fd;
-  update fd (Bytes.to_string (receive fd)) (new_game ()); menu_3 parse_thunk Client
+  conn_client fd;
+  update None fd (Bytes.to_string (receive fd)) (new_game ()); menu_3 parse_thunk Client
+
+let spectator () = 
+  let fd = socket PF_INET SOCK_STREAM 0 in
+  conn_spec fd;
+  spec_play fd (Bytes.to_string (spec_receive fd)) (new_game ())
 
 let rec menu_5 a=
   begin
@@ -320,22 +355,24 @@ let start_menu_helper() =
   helper_string "Welcome to CHECKERS! \n 
     Please enter 'Start' or 'Quit' to move forward.\n>";
   menu_1 (parse_thunk);
-  helper_string "Player vs Player or Player vs AI? \n
-    Please enter 'player' or 'AI' to move forward.\n>";
+  helper_string "Player vs Player or Player vs AI, or do you want to spectate? \n
+    Please enter 'player', 'AI' or 'spectate' to move forward.\n>";
   let opp =  menu_2 (parse_thunk) in 
-  if opp = Player then (
-    helper_string "Do you want to play on the same or different machines?\n>";
-    let same_diff = menu_4 (parse_thunk) in
-    if same_diff = Same then play_player()
-    else (
-      helper_string "Do you want to be the host or client?\n>";
-      let host_client = menu_5 (parse_thunk) in
-      if host_client = Host then 
-        try host () with Rematch_Host -> 
-          helper_string "Starting new game."; host() 
-      else try client () with Rematch_Client -> 
-        helper_string "Starting new game.";client()))
-  else play_ai()
+  match opp with 
+  | Player  -> (
+      helper_string "Do you want to play on the same or different machines?\n>";
+      let same_diff = menu_4 (parse_thunk) in
+      if same_diff = Same then play_player()
+      else (
+        helper_string "Do you want to be the host or client?\n>";
+        let host_client = menu_5 (parse_thunk) in
+        if host_client = Host then 
+          try host () with Rematch_Host -> 
+            helper_string "Starting new game."; host() 
+        else try client () with Rematch_Client -> 
+          helper_string "Starting new game.";client()));
+  | AI -> play_ai ()
+  | Spectate -> spectator ()
 
 let rec start_menu = function 
   | None -> begin try start_menu_helper() with Restart -> main() end 
@@ -344,7 +381,8 @@ let rec start_menu = function
     else if t = Host then try play_host() with Restart -> main()
     else if t = Client then try play_client() with Restart -> main()
 
-and main () =
+and  main () =
+  ANSITerminal.resize 150 50;
   try start_menu None
   with 
   | Restart -> start_menu None 

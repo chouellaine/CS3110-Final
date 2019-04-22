@@ -28,7 +28,7 @@ type action = (int*int) list
 
 (** [ptype] the player's opponent, which is another user [Player]
     or the [AI] *)
-type ptype = Player | AI 
+type ptype = Player | AI | Spectate
 
 type sd = Same | Different
 

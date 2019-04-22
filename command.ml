@@ -1,5 +1,5 @@
 type action = (int*int) list 
-type ptype = Player | AI 
+type ptype = Player | AI | Spectate
 type sd = Same | Different
 type hc = Host | Client 
 
@@ -82,6 +82,7 @@ let read_cmd = function
   | h :: [] when String.lowercase_ascii h = "reject" -> Reject
   | h :: [] when String.lowercase_ascii h = "player" -> Opponent (Player)
   | h :: [] when String.lowercase_ascii h = "ai" -> Opponent (AI)
+  | h :: [] when String.lowercase_ascii h = "spectate" -> Opponent (Spectate)
   | h :: [] when String.lowercase_ascii h = "quit" -> Quit
   | h :: [] when String.lowercase_ascii h = "same" -> SameDiff Same
   | h :: [] when String.lowercase_ascii h = "different" -> SameDiff Different

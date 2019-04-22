@@ -18,6 +18,7 @@ type piece =
 type t = {
   pieces: piece list;
   turn: int; 
+  moves_without_capture: int; 
 }
 
 (** [pp_move_lst mv_lst] pretty prints the move list [mv_lst] *)
@@ -30,9 +31,12 @@ val new_game : unit -> t
 (** [get_moves st] is a list of legal moves given the currrent state. *)
 val get_all_moves : t -> ((int * int) list) list 
 
-(** [get_score st points] gets the current number of black pieces minus the 
-    current number of red pieces. *)
+(** [get_eval st points] gets the current number of black pieces minus the 
+    current number of red pieces. Kings are worth more points than normal pieces. *)
 val get_eval : t -> float
+
+(** [get_suicide_eval st points] is the opposite of get_eval. *)
+val get_eval_suicide : t -> float
 
 (** The type representing the result of an attempted move. *)
 type result = Legal of t | Illegal | Win of color
