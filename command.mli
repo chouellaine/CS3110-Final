@@ -50,6 +50,8 @@ type command =
   | Move of action
   | Rematch
   | StartOver
+  | Load 
+  | Save
 
 (** Raised when an empty command is parsed. *)
 exception Empty
@@ -83,3 +85,8 @@ exception Malformed
     - "move {i}" where {i} is a string with more than one checkerboard 
       coordinate point *)
 val parse : string -> command
+
+
+(** [convert_coord] is [c] in (x,y) coordinate format
+    Raises Malform if [c] is not within the board range. *)
+val convert_coord : string -> int *int 
