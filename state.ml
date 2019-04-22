@@ -1,6 +1,8 @@
+open Game
+
 type color = 
-  | Black
-  | Red
+  | Black (*white on ANSI *)
+  | Red (*magenta on ANSI*)
 
 type piece = 
   | P of (color * (int * int)) 
@@ -10,9 +12,12 @@ type t = {
   pieces: piece list;
   turn: int; 
 }
-
 (** The type representing the result of an attempted move. *)
 type result = Legal of t | Illegal | Win of color
+
+let init_state game =
+  {pieces = game.pieces; 
+   turn = game.turn}
 
 (** [get_int_letter num] is the board character corresponding to the integer 
     coordinate given. For example, 1 corresponds to A, 2 to B ... 8 to H *)

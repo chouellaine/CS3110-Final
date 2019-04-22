@@ -3,6 +3,7 @@ open Command
 open Sockets
 open Unix
 open Ai
+open Game 
 
 type turn = Wait | Go
 type player = AI | Player | Host | Client
@@ -10,7 +11,8 @@ type player = AI | Player | Host | Client
 (*   Game Infrastucture:
 
      Menu Level 1 accepts commands: "Start", "Quit" 
-     Display:  "Welcome to Checker, type Start/Quit, etc"
+     Display:  "Welcome to Checker, Start a new Game or Load a Game 
+     (or Quit)."
 
      Menu Level 2 accepts commands: "Player" , "AI", "Quit"
      Display: "Player vs Player or Player vs AI,etc "
@@ -183,6 +185,14 @@ and update fd str st =
     | _ -> failwith "command should be a move if it gets to [update]"
   end
 
+let rec get_json() = 
+  match read_line () with
+  | exception End_of_file -> ()
+  | file_name -> 
+    match Yojson.Basic.from_file file_name with 
+    | j -> helper_init (from_json j)
+    | exception _ -> helper_string "File Error, try again"; 
+      print_string "> "; helper_start () 
 (**[menu_3] runs the game at Level Menu 3.*)
 let rec menu_3 a ai=
   begin
@@ -299,6 +309,7 @@ let rec menu_1 a =
     | exception Empty -> helper_string "Empty Command. Try again.\n>" ; 
       menu_1 (parse_thunk); 
     | Start -> ()
+    | Load x -> 
     | Quit ->  helper_string "Quitting Game."; Pervasives.exit 0
     | Score | Draw | Moves | Accept | Reject | Opponent _ 
     | Move _ |Rematch| SameDiff _|HostClient _ | StartOver 
@@ -333,7 +344,7 @@ let rec start_menu = function
     else if t = Host then try play_host() with Restart -> main()
     else if t = Client then try play_client() with Restart -> main()
 
-and  main () =
+and main () =
   try start_menu None
   with 
   | Restart -> start_menu None 

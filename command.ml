@@ -17,6 +17,8 @@ type command =
   | Move of action
   | Rematch 
   | StartOver
+  | Load 
+  | Save 
 
 exception Empty
 
@@ -51,18 +53,15 @@ let rec parse_rec lst newlst =
   | h :: t when h = "" -> parse_rec t newlst
   | h :: [] -> [h]
   | h :: t when String.lowercase_ascii h <> "move" && 
-                String.lowercase_ascii h <> "new" ->  raise Malformed
-  | h1 :: h2 :: t when String.lowercase_ascii h1 = "new" && 
-                       String.lowercase_ascii h2 = "game" -> 
-    parse_rec t (h2::h1::newlst)
-  | h1 :: h2 :: t when String.lowercase_ascii h1 = "new" && 
+                String.lowercase_ascii h <> "new" &&
+                String.lowercase_ascii h <> "save" ->  raise Malformed
+  | h1 :: h2 :: t when (String.lowercase_ascii h1 = "new" || 
+                        String.lowercase_ascii h1 = "save") && 
                        String.lowercase_ascii h2 = "game" -> 
     parse_rec t (h2::h1::newlst)
   | h :: t when h = "move" -> move_parse false t ["move"]
   | _ -> failwith "shouldn't get here"
 
-(** [convert_coord] is [c] in (x,y) coordinate format
-    Raises Malform if [c] is not within the board range. *)
 let convert_coord c = 
   if String.length c > 2 then raise Malformed else 
     match (Char.code (Char.lowercase_ascii c.[0]), 
@@ -95,6 +94,9 @@ let read_cmd = function
   | h :: t :: [] when String.lowercase_ascii h = "new" 
                    && String.lowercase_ascii t = "game" ->  Rematch
   | h :: [] when String.lowercase_ascii h = "restart" -> StartOver 
+  | h :: [] when String.lowercase_ascii h = "load" -> Load 
+  | h :: t :: [] when String.lowercase_ascii h = "save" 
+                   && String.lowercase_ascii t = "game" ->  Save
   | _ :: _ -> raise Malformed 
 
 let parse str =
