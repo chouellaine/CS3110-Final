@@ -38,27 +38,38 @@ let spec_receive fd =
   match recv fd msg 0 64 [] with
   | len -> (Bytes.of_string (String.sub (Bytes.to_string msg) 0 len))
 
-let listen_accept fd =
-  listen fd 5;
-  print_string "Please give your IP Address and this port number to your opponent: \n";
+let ip_port_disp () =
   print_endline "Your IP Address: ";
   let code = system 
       "ifconfig en0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'"
   in
   begin
     match code with
-    | WEXITED 0 -> print_newline (); print_string ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");
+    | WEXITED 0 -> ()
     | WEXITED 1 -> print_endline "Trying this instead. \nYour IP Address:";
       let code2 = system "ifconfig eth0 | grep broadcast | grep -o 'inet\ [0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*' | grep -o '[0-9]*\\.[0-9]*\\.[0-9]*\\.[0-9]*'" in
       print_newline ();
       begin
         match code2 with
-        | WEXITED 0 -> print_newline (); print_string ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");
+        | WEXITED 0 -> ()
         | _ -> print_string "We couldn't find your IP Address. You will have to find it manually.\n";
       end
     | _ -> print_string "We couldn't find your IP Address. You will have to find it manually.\n";
-  end;
+  end
+
+let listen_same fd =
+  listen fd 4;
+  print_string "Please give your IP Address and port number to anyone who may want to spectate\n\n";
+  ip_port_disp ();
   print_newline ();
+  print_string ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n")
+
+let listen_accept fd =
+  listen fd 5;
+  print_string "Please give your IP Address and this port number to your opponent: \n";
+  ip_port_disp ();
+  print_newline ();
+  print_string ("Port number: \n" ^ string_of_int (find_port fd) ^ "\n");
   print_endline "Waiting for opponent to connect...";
   accept fd
 

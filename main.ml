@@ -56,25 +56,31 @@ let helper_string str =
     - Prompting the user again if an illegal move is made or an unrecognized 
       command is issued
 *)
-let rec play_game str st ai = 
+let rec play_game f_list str st ai = 
   (*helper_string "in play_game";*)
-  match str() with 
+  match parse str with 
   | Moves -> pp_move_lst (get_all_moves st) ; 
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-    play_game (parse_thunk) st ai
+    play_game f_list (read_line ()) st ai
   | Move m -> 
     if st.moves_without_capture = 39 then helper_string "40 moves were made without progression by either side. The game is a draw." else 
       begin match move st m with 
-        | Legal st' when not ai -> print_board st'.pieces; 
+        | Legal st' when not ai -> 
+          begin
+            match f_list with 
+            | Some lst -> write_children lst str
+            | None -> ()
+          end;
+          print_board st'.pieces; 
           helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-          play_game (parse_thunk) st' ai
+          play_game f_list (read_line ()) st' ai
         | Legal st' when ai -> let st'' = (update_state st' (get_sugg_mv st' 7 get_eval_suicide)) 
           in print_board st''.pieces; 
           helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-          play_game (parse_thunk) st'' ai
+          play_game f_list (read_line ()) st'' ai
         | Legal st' -> failwith "ai was not set to true or false???" 
         | Illegal -> helper_string "Illegal move. Try again.\n>"; 
-          play_game (parse_thunk) st ai 
+          play_game f_list (read_line ()) st ai 
         | Win c when c = Black -> 
           helper_string "Game Over. Black Wins! \n  Quit or Rematch?\n>"; ()
         | Win c when c = Red -> 
@@ -82,36 +88,36 @@ let rec play_game str st ai =
         | Win _ -> failwith "BUG in play_game, Win match!"
       end
   | exception Malformed -> helper_string "Invalid Command. Try again.\n>"; 
-    play_game (parse_thunk)st ai 
+    play_game f_list (read_line ()) st ai 
   | exception Empty -> helper_string "Empty Command. Try again.\n>"; 
-    play_game (parse_thunk) st ai 
+    play_game f_list (read_line ()) st ai 
   | Score -> print_float (get_eval st); 
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-    play_game (parse_thunk) st ai
+    play_game f_list (read_line ()) st ai
   | Draw -> helper_string "A draw has been offered. Do you accept or reject?\n>";
-    accept_or_reject ai st;
+    accept_or_reject f_list ai st;
   | Quit -> helper_string "Peace out homie."; Pervasives.exit 0
   | Rematch -> helper_string "Starting a new game."; 
     if ai then raise Rematch_AI else raise Rematch_Same 
   | StartOver -> helper_string "Restarting Checkers.";
     raise Restart
   | Opponent _ | Start | Accept | Reject | HostClient _ | SameDiff _ 
-    -> helper_string "other cmd, Invalid Command. Try again.\n>"; play_game (parse_thunk) st ai
+    -> helper_string "other cmd, Invalid Command. Try again.\n>"; play_game f_list (read_line ()) st ai
 
-and accept_or_reject ai s =
+and accept_or_reject f_list ai s =
   match parse_thunk() with
   | Accept -> 
     helper_string "Draw accepted. The game has been drawn.\n Quit or Rematch?\n>"; () 
   | Reject -> helper_string "Draw rejected. It is still your turn.\n>"; 
-    play_game (parse_thunk) s false
+    play_game f_list (read_line ()) s false
   | exception Malformed -> helper_string "Invalid Command. Try again.\n>"; 
-    accept_or_reject ai s
+    accept_or_reject f_list ai s
   | exception Empty -> helper_string "Empty Command. Try again.\n>"; 
-    accept_or_reject ai s
+    accept_or_reject f_list ai s
   | StartOver -> raise Restart
   | Start| Quit| Score| Draw| Moves| Opponent _ 
   | Move _ | Rematch | SameDiff _| HostClient _ 
-    -> helper_string "You must accept or reject the draw.\n>"; accept_or_reject ai s
+    -> helper_string "You must accept or reject the draw.\n>"; accept_or_reject f_list ai s
 
 let rec host_client_play f_list fd str st = 
   Pervasives.print_newline ();
@@ -159,7 +165,7 @@ let rec host_client_play f_list fd str st =
 
 (* TODO: Make compatible with host-client *)
 and hc_accept_or_reject f_list fd s =
-  match parse_thunk() with
+  match parse_thunk () with
   | Accept -> 
     helper_string "Draw accepted. The game has been drawn.\n Quit or Rematch?\n>"; () 
   | Reject -> helper_string "Draw rejected. It is still your turn.\n>"; 
@@ -297,16 +303,21 @@ let rec menu_2 a=
 
 let play_player_helper()= 
   begin
+    let fd = socket PF_INET SOCK_STREAM 0 in
+    listen_same fd;
+    print_newline ();
+    let f_list = init_spectators fd 4 in
+    Unix.sleep 2; (* give user time to read spectator message *)
     print_board (new_game ()).pieces;
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-    play_game (parse_thunk) (new_game ()) false; menu_3 parse_thunk Player 
+    play_game (Some f_list) (read_line ()) (new_game ()) false; menu_3 parse_thunk Player 
   end 
 
 let play_ai_helper() = 
   begin 
     print_board (new_game ()).pieces;
     helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>"; 
-    play_game (parse_thunk) (new_game ()) true; menu_3 parse_thunk AI 
+    play_game None (read_line ()) (new_game ()) true; menu_3 parse_thunk AI 
   end 
 
 let play_player() = 
