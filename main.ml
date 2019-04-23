@@ -141,7 +141,7 @@ let rec host_client_play f_list fd str st =
           end;
           print_board st'.pieces;
           Pervasives.print_newline ();
-          update f_list fd (Bytes.to_string (receive fd)) st')
+          update f_list fd (Bytes.to_string (client_receive fd)) st')
       | Illegal -> helper_string "Illegal move. Try again."; 
         host_client_play f_list fd (read_line ()) st
       | Win c when c = Black -> 
@@ -249,7 +249,7 @@ let rec menu_3 a ai=
 
 let host () = 
   let fd = socket PF_INET SOCK_STREAM 0 in
-  let conn_fd,sockaddr = listen_accept fd in
+  let conn_fd,sockaddr = listen_accept fd 4 in
   let f_list = init_spectators fd 4 in
   print_board (new_game ()).pieces;
   helper_string "It is your turn, enter a move. Ex: 'move e1 to a2'\n>";
@@ -259,7 +259,7 @@ let host () =
 let client () = 
   let fd = socket PF_INET SOCK_STREAM 0 in
   conn_client fd;
-  update None fd (Bytes.to_string (receive fd)) (new_game ()); menu_3 parse_thunk Client
+  update None fd (Bytes.to_string (client_receive fd)) (new_game ()); menu_3 parse_thunk Client
 
 let spectator () = 
   let fd = socket PF_INET SOCK_STREAM 0 in
@@ -314,7 +314,7 @@ let rec menu_2 a=
 let play_player_helper()= 
   begin
     let fd = socket PF_INET SOCK_STREAM 0 in
-    listen_same fd;
+    listen_same fd 4;
     print_newline ();
     let f_list = init_spectators fd 4 in
     Unix.sleep 2; (* give user time to read spectator message *)
