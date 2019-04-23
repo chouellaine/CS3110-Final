@@ -4,8 +4,6 @@ open Sockets
 open Unix
 open Ai
 open Game 
-
-(*type turn = Wait | Go*)
 (*Easy = 3 | Medium = 6 | Hard = 9 | AlphaZero  = 12*)
 (*  Game Infrastucture:
 
@@ -46,13 +44,6 @@ open Game
     Side note: All commands are case-insensitive.
     "Restart": Starts over to playWatch() 
     "Rematch" and "New Game": Starts a new game with the same settings *)
-
-(*exception Restart 
-  exception Rematch of player 
-  exception Rematch_Client 
-  exception Rematch_AI 
-  exception Rematch_Same 
-*)
 
 (** [helper_string str] prints [str] with a new line. *)
 let helper_string str =  
@@ -275,12 +266,6 @@ and spectator () =
   let fd = socket PF_INET SOCK_STREAM 0 in
   conn_spec fd;
   spec_play fd (Bytes.to_string (spec_receive fd)) (new_game ())
-
-(*and playClient = 
-  helper_string "Starting new game."; client() 
-
-  and playHost g = 
-  helper_string "Starting new game."; host g  *)
 
 and playPlayer g= 
   helper_string "Starting new game.";
