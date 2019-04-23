@@ -1,24 +1,24 @@
 open Game
 
-type color = 
-  | Black (*white on ANSI *)
-  | Red (*magenta on ANSI*)
-
-type piece = 
-  | P of (color * (int * int)) 
-  | K of (color * (int * int)) 
-
-type t = {
-  pieces: piece list;
-  turn: int; 
-  moves_without_capture: int; 
-}
 (** The type representing the result of an attempted move. *)
 type result = Legal of t | Illegal | Win of color
 
-let init_state game =
-  {pieces = game.pieces; 
-   turn = game.turn}
+let new_game() = 
+  {
+    game = Regular;
+    pieces = [
+      P (Black,(1,1));P (Black,(3,1));P (Black,(5,1));P (Black,(7,1));P (Black,(2,2));
+      P (Black,(4,2));P (Black,(6,2));P (Black,(8,2));P (Black,(1,3));P (Black,(3,3));
+      P (Black,(5,3));P (Black,(7,3));P (Red,(2,8));P (Red,(4,8));P (Red,(6,8));
+      P (Red,(8,8));P (Red,(1,7));P (Red,(3,7));P (Red,(5,7));
+      P (Red,(7,7));P (Red,(2,6));P (Red,(4,6));P (Red,(6,6));
+      P (Red,(8,6))
+    ];
+    turn = 1; 
+    moves_without_capture = 0; 
+    opp = Player;
+    connection = None;
+  }
 
 (** [get_int_letter num] is the board character corresponding to the integer 
     coordinate given. For example, 1 corresponds to A, 2 to B ... 8 to H *)
@@ -43,21 +43,6 @@ let rec pp_move_lst mv_lst =
   | [] -> print_endline ""
   | h::t -> pp_move h; print_endline ""; 
     pp_move_lst t
-
-
-let new_game () = 
-  {
-    pieces = [
-      P (Black,(1,1));P (Black,(3,1));P (Black,(5,1));P (Black,(7,1));P (Black,(2,2));
-      P (Black,(4,2));P (Black,(6,2));P (Black,(8,2));P (Black,(1,3));P (Black,(3,3));
-      P (Black,(5,3));P (Black,(7,3));P (Red,(2,8));P (Red,(4,8));P (Red,(6,8));
-      P (Red,(8,8));P (Red,(1,7));P (Red,(3,7));P (Red,(5,7));
-      P (Red,(7,7));P (Red,(2,6));P (Red,(4,6));P (Red,(6,6));
-      P (Red,(8,6))
-    ];
-    turn = 1; 
-    moves_without_capture = 0; 
-  }
 
 (** [in bounds coords] is whether [coords] is in bounds of the board. *)
 let in_bounds coords = 
@@ -230,17 +215,22 @@ let update_piece_list piece_lst mv =
 
 let update_state st mv = 
   let new_pieces = update_piece_list st.pieces mv in 
-  {pieces = new_pieces; turn = st.turn + 1; 
-   moves_without_capture = if List.((length new_pieces) = (length st.pieces)) 
-     then (st.moves_without_capture + 1) else 0
+  {st with game = st.game; 
+           pieces = new_pieces; 
+           turn = st.turn + 1; 
+           moves_without_capture = 
+             if List.((length new_pieces) = (length st.pieces)) 
+             then (st.moves_without_capture + 1) else 0;  
   } 
 
 let move st mv = 
   if List.mem mv (get_all_moves st) then 
     Legal (update_state st mv)
   else if List.length(get_all_moves st) = 0 then 
-    let color = if st.turn mod 2 = 0 then Black else Red in
-    Win color
+    let color = (st.turn mod 2 = 0) in 
+    match st.game with 
+    |Suicide ->if color then Win Black else Win Red
+    |Regular ->if color then Win Red else Win Black
   else Illegal 
 
 let get_eval st = 

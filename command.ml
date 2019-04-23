@@ -1,7 +1,9 @@
 type action = (int*int) list 
-type ptype = Player | AI | Spectate
+type ptype = Player | AI 
 type sd = Same | Different
 type hc = Host | Client 
+type gtype = Suicide | Regular 
+type diff = Easy | Medium | Hard | AlphaZero
 
 type command = 
   | Start
@@ -12,13 +14,21 @@ type command =
   | Accept
   | Reject 
   | HostClient of hc
-  | SameDiff of sd
+  | Env of sd
   | Opponent of ptype
   | Move of action
   | Rematch 
   | StartOver
-  | Load 
+  | Load
+  | New 
   | Save 
+  | Play 
+  | Watch
+  | Yes 
+  | No 
+  | GameType of gtype
+  | Level of diff  
+
 
 exception Empty
 
@@ -53,10 +63,12 @@ let rec parse_rec lst newlst =
   | h :: t when h = "" -> parse_rec t newlst
   | h :: [] -> [h]
   | h :: t when String.lowercase_ascii h <> "move" && 
+                String.lowercase_ascii h <> "load" && 
                 String.lowercase_ascii h <> "new" &&
                 String.lowercase_ascii h <> "save" ->  raise Malformed
   | h1 :: h2 :: t when (String.lowercase_ascii h1 = "new" || 
-                        String.lowercase_ascii h1 = "save") && 
+                        String.lowercase_ascii h1 = "save" ||
+                        String.lowercase_ascii h1 = "load") && 
                        String.lowercase_ascii h2 = "game" -> 
     parse_rec t (h2::h1::newlst)
   | h :: t when h = "move" -> move_parse false t ["move"]
@@ -69,35 +81,49 @@ let convert_coord c =
     | x,y when x > 96 && x < 105 && y > 48 && y < 57 -> (x mod 96,y mod 48)
     | _,_ -> raise Malformed
 
+let str_to_diff str = 
+  if str = "easy" then Level Easy
+  else if str = "medium" then Level Medium 
+  else if str = "hard" then Level Hard
+  else if str = "alphazero" then Level AlphaZero 
+  else raise Malformed
+
 (** [read_cmd lst] is the appropriate [command] from the the user input.
     Raises [Malformed] if the input is malformed. *) 
 let read_cmd = function
   | [] -> raise Malformed 
   | h :: [] when String.lowercase_ascii h = "start" -> Start
+  | h :: [] when String.lowercase_ascii h = "play" -> Play
+  | h :: [] when String.lowercase_ascii h = "watch" -> Watch
+  | h :: [] when String.lowercase_ascii h = "regular" -> GameType Regular
+  | h :: [] when String.lowercase_ascii h = "suicide" -> GameType Suicide
   | h :: [] when String.lowercase_ascii h = "quit" -> Quit
   | h :: [] when String.lowercase_ascii h = "score" -> Score
   | h :: [] when String.lowercase_ascii h = "draw" -> Draw
   | h :: [] when String.lowercase_ascii h = "moves" -> Moves
   | h :: [] when String.lowercase_ascii h = "accept" -> Accept
   | h :: [] when String.lowercase_ascii h = "reject" -> Reject
-  | h :: [] when String.lowercase_ascii h = "player" -> Opponent (Player)
-  | h :: [] when String.lowercase_ascii h = "ai" -> Opponent (AI)
-  | h :: [] when String.lowercase_ascii h = "spectate" -> Opponent (Spectate)
+  | h :: [] when String.lowercase_ascii h = "player" -> Opponent Player
+  | h :: [] when String.lowercase_ascii h = "ai" -> Opponent AI
   | h :: [] when String.lowercase_ascii h = "quit" -> Quit
-  | h :: [] when String.lowercase_ascii h = "same" -> SameDiff Same
-  | h :: [] when String.lowercase_ascii h = "different" -> SameDiff Different
+  | h :: [] when String.lowercase_ascii h = "same" -> Env Same
+  | h :: [] when String.lowercase_ascii h = "different" -> Env Different
   | h :: [] when String.lowercase_ascii h = "host" -> HostClient Host
   | h :: [] when String.lowercase_ascii h = "client" -> HostClient Client
+  | h :: [] when String.lowercase_ascii h = "yes" -> Yes
+  | h :: [] when String.lowercase_ascii h = "no" -> No
   | h :: [] when String.lowercase_ascii h = "move" -> raise Malformed 
   | h :: _ :: [] when String.lowercase_ascii h = "move" -> raise Malformed
   | h :: t  when String.lowercase_ascii h = "move" -> Move (List.map convert_coord t)
   | h :: [] when String.lowercase_ascii h = "rematch" -> Rematch
   | h :: t :: [] when String.lowercase_ascii h = "new" 
-                   && String.lowercase_ascii t = "game" ->  Rematch
+                   && String.lowercase_ascii t = "game" ->  New
   | h :: [] when String.lowercase_ascii h = "restart" -> StartOver 
-  | h :: [] when String.lowercase_ascii h = "load" -> Load 
+  | h :: t:: [] when String.lowercase_ascii h = "load" 
+                  && String.lowercase_ascii t = "game"-> Load 
   | h :: t :: [] when String.lowercase_ascii h = "save" 
                    && String.lowercase_ascii t = "game" ->  Save
+  | h :: [] -> h |> String.lowercase_ascii |> str_to_diff 
   | _ :: _ -> raise Malformed 
 
 let parse str =

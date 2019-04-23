@@ -1,0 +1,22 @@
+{
+  "red": [
+    {
+      "pieces": [
+        "a3"
+      ],
+      "kings": []
+    }
+  ],
+  "black": [
+    {
+      "pieces": [
+        "b6"
+      ],
+      "kings": []
+    }
+  ],
+  "turn": 1,
+  "opp": "AI",
+  "moves": 10,
+  "game": "regular"
+}

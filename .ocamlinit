@@ -5,5 +5,5 @@
 #load "command.cmo";;
 #load "state.cmo";;
 #load "game.cmo";;
-#load "socket.cmo";;
+#load "Sockets.cmo";;
 #load "ai.cmo";;
