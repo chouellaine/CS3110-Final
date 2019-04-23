@@ -260,7 +260,10 @@ and client () =
   helper_string "Starting new game.";
   let fd = socket PF_INET SOCK_STREAM 0 in
   conn_client fd;
-  update None fd (Bytes.to_string (client_receive fd)) (new_game ());
+  let defaultGame = new_game() in 
+  let initGame = {defaultGame with connection = Some (None,fd);
+                                   game = Regular; opp = Client} in
+  update None fd (Bytes.to_string (client_receive fd)) (initGame);
 
 and spectator () = 
   let fd = socket PF_INET SOCK_STREAM 0 in
