@@ -28,12 +28,15 @@ type action = (int*int) list
 
 (** [ptype] the player's opponent, which is another user [Player]
     or the [AI] *)
-type ptype = Player | AI | Spectate
+type ptype = Player | AI 
 
 type sd = Same | Different
 
 type hc = Host | Client 
 
+type gtype = Suicide | Regular 
+
+type diff = Easy | Medium | Hard | AlphaZero
 (** The type [command] represents a player command that is decomposed
     into a verb and possibly an action. *)
 type command = 
@@ -43,15 +46,22 @@ type command =
   | Draw
   | Moves
   | Accept
-  | Reject
+  | Reject 
   | HostClient of hc
-  | SameDiff of sd
+  | Env of sd
   | Opponent of ptype
   | Move of action
-  | Rematch
+  | Rematch 
   | StartOver
-  | Load 
-  | Save
+  | Load
+  | New 
+  | Save 
+  | Play 
+  | Watch
+  | Yes 
+  | No 
+  | GameType of gtype
+  | Level of diff  
 
 (** Raised when an empty command is parsed. *)
 exception Empty
