@@ -11,7 +11,7 @@ type command =
   | Score 
   | Draw
   | Moves
-  | Accept
+  | Accept 
   | Reject 
   | HostClient of hc
   | Env of sd

@@ -31,7 +31,7 @@ let spec_receive fd =
   match recv fd msg 0 64 [] with
   | len -> (Bytes.of_string (String.sub (Bytes.to_string msg) 0 len))
 
-let client_receive fd =
+let client_receive fd = 
   ANSITerminal.(print_string [red] "Waiting for your opponent to make a move\n"); 
   Pervasives.print_newline ();
   spec_receive fd

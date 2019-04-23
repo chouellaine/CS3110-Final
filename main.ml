@@ -125,10 +125,11 @@ let rec playGame st =
         | Legal st' -> print_board st'.pieces; 
           begin  match st.opp with 
             |Player -> playGame st'
-            |AI i -> let st'' = (update_state st' (get_sugg_mv st' (get_level i) (getScore st.game))) in 
-              print_board st''.pieces; playGame st''
-            |Client -> sendMove st' st str
-            |Host -> failwith "Client User shouldn't reach playGame"
+            |AI i -> 
+              let st'' = 
+                st.game |> getScore |> get_sugg_mv st' (get_level i)
+                |> update_state st' in print_board st''.pieces; playGame st''
+            |Client | Host -> sendMove st' st str
           end 
         | Illegal -> helper_string "Illegal move. Try again.\n>"; 
           playGame st 
@@ -141,28 +142,53 @@ let rec playGame st =
   | exception Malformed -> invalid_str None; playGame st 
   | exception Empty -> empty_str(); playGame st 
   | Score -> st|> getScore st.game |> print_float; playGame st 
-  | Draw -> draw st
-  | Quit -> quit (Some st)
-  | Rematch -> newgame_str(); 
-    let defaultGame = new_game() in 
-    let initGame = {defaultGame with opp = st.opp; connection = st.connection;
-                                     game=st.game; } in 
-    print_board initGame.pieces;
-    playGame initGame
-  | StartOver -> helper_string "Restarting Checkers."; main()
+  | Draw -> helper_string "Draw Requested"; 
+    let f1() = (draw st) in matchPlayer f1 st str st.opp
+  | Quit -> helper_string "Quitting Game";
+    let f1() = (quit (Some st)) in matchPlayer f1 st str st.opp
+  | Rematch -> begin match st.opp with 
+      | AI _ | Player ->  newgame_str(); 
+        let defaultGame = new_game() in 
+        let initGame = 
+          {defaultGame with opp = st.opp; 
+                            connection = st.connection;
+                            game=st.game; } in 
+        print_board initGame.pieces;
+        playGame initGame 
+      | Client | Host -> helper_string "Must request a draw before rematching.";
+        playGame st
+    end 
+  | StartOver -> helper_string "Starting Over";
+    let f1() = helper_string "Restarting Checkers."; main() in 
+    matchPlayer f1 st str st.opp 
   | Save -> save st
   | Opponent _ | Start | Accept | Reject | Watch 
   | HostClient _ | Env _  |Load | Play | GameType _ | Level _ |New |Yes |No
     -> invalid_str None; playGame st 
 
+and matchPlayer f1 st str  = function 
+  |Player | AI _ -> f1() 
+  |Client | Host -> sendMove st st str
+
 and draw st =
   match st.opp with 
-  |AI _ -> helper_string"Draw Accepted"; gameOver st 
+  |AI _ -> helper_string " Draw accepted"; gameOver st 
   |Player|Host|Client -> 
-    menu_str" Your opponent offers to draw." ["Accept";"Reject"];
+    menu_str(" Your opponent offers a draw.") ["Accept";"Reject"];
     match (matchCommand [Accept; Reject]) with 
-    | Accept -> helper_string"Draw Accepted."; gameOver st 
-    | Reject -> helper_string"Draw Rejected. It is still your turn."; playGame st 
+    | Accept -> 
+      begin match st.opp with 
+        | Player ->  helper_string"Draw Accepted."; gameOver st 
+        | Client | Host -> helper_string "You've accepted the draw.";
+          sendMove st st "accept"
+        | AI _ -> failwith "should never reach this point in accept, draw"
+      end 
+    | Reject -> begin match st.opp with 
+        |Player -> helper_string"Draw Rejected. It is still your turn."; playGame st 
+        |Client | Host -> helper_string "You've rejected the draw."; 
+          sendMove st st "reject"
+        |AI _ -> failwith "should never reach this point in reject, draw"
+      end 
     | _ -> failwith "failed in draw"
 
 and forceDraw st = 
@@ -210,8 +236,69 @@ and update f_list fd str st  =
           playGame st'
         | _ -> failwith "move should be legal if it gets to [update]"
       end
-    | _ -> failwith "command should be a move if it gets to [update]"
+    | Draw -> draw st
+    | Quit | StartOver -> restartServer st; 
+    | Rematch -> rematchServer st; 
+    | _ -> failwith "not a valid command to send in [update]"
   end
+
+and restartServer st =
+  menu_str " Your opponent has left the game" ["Restart";"Quit"];
+  match (matchCommand [StartOver;Quit]) with 
+  | StartOver -> main()
+  | Quit -> quit (Some st)
+  | _ -> failwith "failed in restartServer"
+
+and rematchServer st = 
+  menu_str " Your opponent has requested a Rematch" ["Accept";"Reject"];
+  match (matchCommand [Accept;Reject]) with 
+  | Accept -> helper_string "You've accepted the rematch. Starting a new game"; 
+    begin match st.opp with 
+      |Host -> 
+        begin match st.connection with 
+          | Some (_, fd) -> clientGame fd 
+          | None -> failwith "missing connection info in rematchServer,hostNone"
+        end 
+      |Client -> 
+        begin match st.connection with 
+          | Some ((Some f_list),conn_fd) -> hostGame f_list conn_fd st.game 
+          | None -> failwith "missing connection info in rematchServer,clientNone"
+          | _  -> failwith "missing connection info in rematchServer,client"
+        end 
+      |_ -> failwith "shouldn't reach here in rematchServer"
+    end 
+  | Reject -> helper_string "You've rejected the rematch."; sendMove st st "quit";
+  | _ -> failwith "failed in restartServer" 
+
+and waitDraw f_list fd str st= 
+  match parse str with 
+  |Accept ->  helper_string "Your opponent has accepted the draw."; gameOver st
+  |Reject -> helper_string "Your opponent has rejected the draw.";  playGame st
+  |_ -> failwith "failed in waitDraw"
+
+and waitRematch f_list fd str st = 
+  match parse str with 
+  |Accept -> helper_string "Your opponent has accepted the rematch."; gameOver st
+  |Reject -> helper_string "Your opponent has rejected the rematch."; gameOver st
+  |_ -> failwith "failed in waitDraw"
+
+and updateState t' f_list fd str = 
+  match parse str with 
+  | Quit  -> quit (Some t')
+  | Draw -> helper_string "You've requested a draw.";
+    waitDraw f_list fd (Bytes.to_string (client_receive fd)) t'
+  | Rematch ->  helper_string "You've requested a rematch.";
+    waitRematch f_list fd (Bytes.to_string (client_receive fd)) t' 
+  | StartOver -> main()
+  | Move _ -> begin
+      match f_list with 
+      | Some lst -> write_children lst str
+      | None -> ()
+    end; 
+    print_board t'.pieces;
+    Pervasives.print_newline ();
+    update f_list fd (Bytes.to_string (client_receive fd)) t'
+  | _ -> failwith ("failed in updateMove")
 
 and sendMove t' t str = 
   match t.connection with 
@@ -221,16 +308,8 @@ and sendMove t' t str =
     let f_list = fst x in 
     let sent = send_substring fd str 0 (String.length str) [] in 
     if sent < String.length str then 
-      (print_string "The whole command did not send. There is probably a bug.")
-    else (
-      begin
-        match f_list with 
-        | Some lst -> write_children lst str
-        | None -> ()
-      end;
-      print_board t'.pieces;
-      Pervasives.print_newline ();
-      update f_list fd (Bytes.to_string (client_receive fd)) t')
+      (failwith "The whole command did not send. There is probably a bug.";)
+    else updateState t' f_list fd str
 
 and spec_play fd str st = 
   match parse str with
@@ -245,25 +324,54 @@ and spec_play fd str st =
     end
   | _ -> failwith "command should be a move if it gets to [update]"
 
+and hostGame f_list conn_fd g = 
+  let defaultGame = new_game() in 
+  let initGame = {defaultGame with connection = Some ((Some f_list),conn_fd);
+                                   game = g; opp = Client} in 
+  print_board initGame.pieces;
+  playGame initGame;
+
+and clientGame fd = 
+  let getGame = Bytes.to_string (spec_receive fd) in 
+  let gtype = Game.to_game getGame in 
+  let defaultGame = new_game() in 
+  let initGame = {defaultGame with connection = Some (None,fd);
+                                   game = gtype; opp = Host} in
+  let recv = Bytes.to_string (client_receive fd) in 
+  update None fd recv (initGame);
+
+and sendGame fd g = 
+  let g_str = game_to_str g in 
+  match send_substring fd g_str 0 (String.length g_str) [] with 
+  | exception Unix_error _ -> sendGame fd g
+  | x -> if x < String.length g_str then 
+      (helper_string "Game Type msg failed to send to client";)
+    else ()
+
 and host g = 
   helper_string "Starting new game.";
   let fd = socket PF_INET SOCK_STREAM 0 in
   let conn_fd,sockaddr = listen_accept fd 4 in
   let f_list = init_spectators fd 4 in
-  let defaultGame = new_game() in 
+  sendGame conn_fd g; hostGame f_list conn_fd g
+
+(*let defaultGame = new_game() in 
   let initGame = {defaultGame with connection = Some ((Some f_list),conn_fd);
-                                   game = g; opp = Client} in 
+                                 game = g; opp = Client} in 
   print_board initGame.pieces;
-  playGame initGame; 
+  playGame initGame; *)
 
 and client () = 
   helper_string "Starting new game.";
   let fd = socket PF_INET SOCK_STREAM 0 in
   conn_client fd;
-  let defaultGame = new_game() in 
-  let initGame = {defaultGame with connection = Some (None,fd);
-                                   game = Regular; opp = Client} in
-  update None fd (Bytes.to_string (client_receive fd)) (initGame);
+  (*let recv = Bytes.to_string (client_receive fd) in 
+    let gtype = Game.to_game recv in 
+    let defaultGame = new_game() in 
+    let initGame = {defaultGame with connection = Some (None,fd);
+                                   game = gtype; opp = Host} in
+    update None fd recv (initGame);*)
+  clientGame fd
 
 and spectator () = 
   let fd = socket PF_INET SOCK_STREAM 0 in
