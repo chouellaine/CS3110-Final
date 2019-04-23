@@ -127,8 +127,8 @@ let rec playGame st =
             |Player -> playGame st'
             |AI i -> let st'' = (update_state st' (get_sugg_mv st' (get_level i) (getScore st.game))) in 
               print_board st''.pieces; playGame st''
-            |Host -> sendMove st' st str
-            |Client -> failwith "Client User shouldn't reach playGame"
+            |Client -> sendMove st' st str
+            |Host -> failwith "Client User shouldn't reach playGame"
           end 
         | Illegal -> helper_string "Illegal move. Try again.\n>"; 
           playGame st 
