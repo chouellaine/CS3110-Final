@@ -126,7 +126,7 @@ let rec playGame st =
           begin  match st.opp with 
             |Player -> playGame st'
             |AI i -> 
-              let st'' = 
+              let st'' = print_board st'.pieces; print_newline (); 
                 st.game |> getScore |> get_sugg_mv st' (get_level i)
                 |> update_state st' in print_board st''.pieces; 
               begin 

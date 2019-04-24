@@ -30,7 +30,7 @@ let pruned_minimax st depth eval_fn =
         | [] -> () 
         | h::t -> 
           let res = pmm_helper (update_state s h) (d-1) temp_a temp_b (h::best_path) in
-          max_val_and_path := if (fst !max_val_and_path) > (fst res) then !max_val_and_path else res;
+          max_val_and_path := if (fst !max_val_and_path) >= (fst res) then !max_val_and_path else res;
           temp_a := (max !temp_a (fst !max_val_and_path)); 
           if !temp_a >= !temp_b then () else (update_max t)
       in update_max (get_all_moves s);
@@ -42,7 +42,7 @@ let pruned_minimax st depth eval_fn =
         | [] -> () 
         | h::t -> 
           let res = pmm_helper (update_state s h) (d-1) temp_a temp_b (h::best_path) in
-          min_val_and_path := if (fst !min_val_and_path) < (fst res) then !min_val_and_path else res;
+          min_val_and_path := if (fst !min_val_and_path) <= (fst res) then !min_val_and_path else res;
           temp_b := (min !temp_b (fst !min_val_and_path)); 
           if !temp_a >= !temp_b then () else (update_min t) 
       in update_min (get_all_moves s);
