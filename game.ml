@@ -27,7 +27,7 @@ type t = {
 exception UnknownMove  
 
 let to_game x = 
-  let str = String.lowercase_ascii x in 
+  let str = String.(trim (lowercase_ascii x)) in 
   if str = "suicide" then Suicide 
   else if str = "regular" then Regular 
   else failwith "unknown game type"

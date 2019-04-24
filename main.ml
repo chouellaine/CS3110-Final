@@ -350,6 +350,16 @@ and clientGame fd =
   let recv = Bytes.to_string (client_receive fd) in 
   update None fd recv (initGame);
 
+and specGame fd =
+  let getGame = Bytes.to_string (spec_receive fd) in 
+  print_string getGame;
+  let gtype = Game.to_game getGame in 
+  let defaultGame = new_game() in 
+  let initGame = {defaultGame with connection = Some (None,fd);
+                                   game = gtype; opp = Player} in
+  let recv = Bytes.to_string (client_receive fd) in 
+  spec_play fd recv initGame;
+
 and sendGame fd g = 
   let g_str = game_to_str g in 
   match send_substring fd g_str 0 (String.length g_str) [] with 
@@ -363,30 +373,20 @@ and host g =
   let fd = socket PF_INET SOCK_STREAM 0 in
   let conn_fd,sockaddr = listen_accept fd 4 in
   let f_list = init_spectators fd 4 in
-  sendGame conn_fd g; hostGame f_list conn_fd g
-
-(*let defaultGame = new_game() in 
-  let initGame = {defaultGame with connection = Some ((Some f_list),conn_fd);
-                                 game = g; opp = Client} in 
-  print_board initGame.pieces;
-  playGame initGame; *)
+  sendGame conn_fd g; 
+  write_children f_list (game_to_str g);
+  hostGame f_list conn_fd g
 
 and client () = 
   helper_string "Starting new game.";
   let fd = socket PF_INET SOCK_STREAM 0 in
   conn_client fd;
-  (*let recv = Bytes.to_string (client_receive fd) in 
-    let gtype = Game.to_game recv in 
-    let defaultGame = new_game() in 
-    let initGame = {defaultGame with connection = Some (None,fd);
-                                   game = gtype; opp = Host} in
-    update None fd recv (initGame);*)
   clientGame fd
 
 and spectator () = 
   let fd = socket PF_INET SOCK_STREAM 0 in
   conn_spec fd;
-  spec_play fd (Bytes.to_string (spec_receive fd)) (new_game ())
+  specGame fd;
 
 and playPlayer g= 
   helper_string "Starting new game.";
