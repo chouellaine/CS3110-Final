@@ -105,7 +105,7 @@ let game_to_str = function
 let quote str = 
   {|"|}^str^{|"|}
 
-let to_json t = 
+let to_json t f_name = 
   let turn = t.turn |> string_of_int in 
   let opp = player_to_str t.opp |> quote in 
   let moves = t.moves_without_capture |> string_of_int  in 
@@ -119,10 +119,10 @@ let to_json t =
             {|,"opp":|} ^opp^ 
             {|,"moves":|} ^moves^ 
             {|,"game":|}^game^ "}" in 
-  let json = Yojson.Basic.from_string txt in 
-  let file_name = "checker.json" in 
-  let oc = open_out file_name in 
-  Yojson.Basic.to_file file_name json; close_out oc
+  let json = Yojson.Basic.from_string txt in
+  Unix.chdir "saves";
+  Yojson.Basic.to_file (f_name^".json") json;
+  Unix.chdir ".."
 
 let get_pieces t = t.pieces 
 

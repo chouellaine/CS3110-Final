@@ -153,9 +153,9 @@ let rec playGame st =
   | exception Empty -> empty_str(); playGame st 
   | Score -> st|> getScore st.game |> print_float; playGame st 
   | Draw -> helper_string "Draw Requested"; 
-    let f1() = (draw st) in matchPlayer f1 st str st.opp
+    let f1 () = (draw st) in matchPlayer f1 st str st.opp
   | Quit -> helper_string "Quitting Game";
-    let f1() = (quit (Some st)) in matchPlayer f1 st str st.opp
+    let f1 () = (quit (Some st)) in matchPlayer f1 st str st.opp
   | Rematch -> begin match st.opp with 
       | AI _ | Player ->  newgame_str(); 
         let defaultGame = new_game() in 
@@ -171,7 +171,9 @@ let rec playGame st =
   | StartOver -> helper_string "Starting Over";
     let f1() = helper_string "Restarting Checkers."; main() in 
     matchPlayer f1 st str st.opp 
-  | Save -> save st
+  | Save -> 
+    helper_string "What do you want to name your save file?";
+    save st (read_line ()); quit_str (); Pervasives.exit 0;
   | Opponent _ | Start | Accept | Reject | Watch 
   | HostClient _ | Env _  |Load | Play | GameType _ | Level _ |New |Yes |No
     -> invalid_str None; playGame st 
@@ -205,7 +207,7 @@ and forceDraw st =
   helper_string "40 moves were made without progression by either side. The game is a draw.";
   gameOver st
 
-and save t = to_json t; helper_string" Game Saved Successfully"; playGame t
+and save t s = to_json t s; helper_string" Game Saved Successfully";
 
 and quit t = 
   match t with 
@@ -213,7 +215,9 @@ and quit t =
   |Some x -> 
     menu_str " Save game before quitting?" ["Yes";"No"];
     match (matchCommand [Yes;No]) with 
-    | Yes -> save x
+    | Yes -> 
+      helper_string "What do you want to name your save file?";
+      save x (read_line ()); quit_str (); Pervasives.exit 0
     | No -> quit_str(); Pervasives.exit 0
     | _ -> failwith "failed in quit"
 
@@ -453,16 +457,30 @@ and gameType() =
   | _ -> failwith "failed in gameType"
 
 and load() = 
-  match read_line() with 
+  Unix.chdir "saves";
+  match (read_line()^".json") with 
   | exception End_of_file -> ()
   | file -> match Yojson.Basic.from_file file with 
     | exception _ -> helper_string "File Error, try again"; load()
-    | j -> let st = from_json j in print_board st.pieces; playGame st
+    | j -> let st = from_json j in print_board st.pieces; Unix.chdir "..";
+      playGame st
 
 and loadNew() = 
   menu_str " Load Game or New Game?" ["Load Game";"New Game"];
   match (matchCommand [ Load; New ; Quit ]) with 
-  | Load ->  helper_string "Enter game file to load: <file name>.json"; load() 
+  | Load ->  helper_string "Enter game file to load:"; 
+    let rec list_files dh =
+      begin
+        match Unix.readdir dh with 
+        | exception End_of_file -> ()
+        | s when String.length s <= 5 -> list_files dh
+        | s -> Pervasives.print_endline (String.sub s 0 (String.length s - 5)); list_files dh
+      end in
+    let dh = Unix.opendir "saves" in
+    list_files dh;
+    print_string "\n";
+    Unix.closedir dh;
+    load()
   | New -> gameType() 
   | Quit -> quit None
   |  _ -> failwith "failed in loadNew"
