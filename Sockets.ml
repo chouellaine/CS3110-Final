@@ -72,7 +72,7 @@ let listen_accept fd num =
 let conn_client fd = 
   print_string "Please enter your opponent's IP Address:\n";
   let ip = read_line () in
-  print_string "Please enter the port number to connect to on your opponent's machine:\n";
+  print_string "\nPlease enter the port number to connect to on your opponent's machine:\n";
   let port = read_line () in
   let conn_addr = ADDR_INET(inet_addr_of_string ip,int_of_string port) in
   (connect fd conn_addr;print_board (new_game ()).pieces; Pervasives.print_newline ())
@@ -80,7 +80,7 @@ let conn_client fd =
 let conn_spec fd = 
   print_string "Please enter the IP Address of the host of the game you want to connect to:\n";
   let ip = read_line () in
-  print_string "Please enter the port number to connect to:\n";
+  print_string "\nPlease enter the port number to connect to:\n";
   let port = read_line () in
   let conn_addr = ADDR_INET(inet_addr_of_string ip,int_of_string port) in
   connect fd conn_addr; print_board (new_game ()).pieces; Pervasives.print_newline ()
