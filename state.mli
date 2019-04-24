@@ -31,6 +31,9 @@ type result = Legal of Game.t | Illegal | Win of Game.t*Game.color
 *)
 val update_state : Game.t -> (int * int) list -> Game.t
 
+(**ADD SEPCS *)
+val checkWin: Game.t -> result 
+
 (** [move st mv] is the result of attempting to make the move specified by [mv]
     If the move is legal, then the result is [Legal st'] where [st'] is the 
     new state after taking the move [mv] in the state [st]. Otherwise, the 
