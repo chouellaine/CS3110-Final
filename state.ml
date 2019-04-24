@@ -1,7 +1,7 @@
 open Game
 
 (** The type representing the result of an attempted move. *)
-type result = Legal of t | Illegal | Win of color
+type result = Legal of t | Illegal | Win of t*color
 
 let new_game() = 
   {
@@ -224,14 +224,13 @@ let update_state st mv =
   } 
 
 let move st mv = 
-  if List.mem mv (get_all_moves st) then 
-    Legal (update_state st mv)
-  else if List.length(get_all_moves st) = 0 then 
-    let color = (st.turn mod 2 = 0) in 
-    match st.game with 
-    |Suicide ->if color then Win Black else Win Red
-    |Regular ->if color then Win Red else Win Black
-  else Illegal 
+  if List.mem mv (get_all_moves st) then let st' = update_state st mv in 
+    match get_all_moves st' with 
+    | [] ->  let color = (st.turn mod 2 = 0) in begin match st.game with 
+        |Suicide ->if color then Win (st',Red) else Win (st', Black)
+        |Regular ->if color then Win (st',Black) else Win (st',Red) end
+    | x -> Legal st' 
+  else Illegal
 
 let get_eval st = 
   if (List.length st.pieces) = 0 then 

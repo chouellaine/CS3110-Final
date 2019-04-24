@@ -133,9 +133,9 @@ let rec playGame st =
           end 
         | Illegal -> helper_string "Illegal move. Try again.\n>"; 
           playGame st 
-        | Win c when c = Black -> 
+        | Win (st',c) when c = Black -> print_board st'.pieces;
           helper_string "Game Over. Black Wins!"; gameOver st
-        | Win c when c = Red -> 
+        | Win (st',c) when c = Red -> print_board st'.pieces;
           helper_string "Game Over. Red Wins!"; gameOver st
         | Win _ -> failwith "BUG in playGame, Win match!"
       end 

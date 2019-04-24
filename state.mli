@@ -24,7 +24,7 @@ val get_eval : Game.t -> float
 val get_eval_suicide : Game.t -> float
 
 (** The type representing the result of an attempted move. *)
-type result = Legal of Game.t | Illegal | Win of Game.color
+type result = Legal of Game.t | Illegal | Win of Game.t*Game.color
 
 (** [update_state st mv] is the state resulting from making the move [mv] 
     Requires: [mv] is a legal move
