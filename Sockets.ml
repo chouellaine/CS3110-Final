@@ -66,7 +66,7 @@ let listen_same fd num =
 
 let listen_accept fd num =
   listen_same fd (num+1);
-  print_endline "Waiting for opponent to connect...";
+  print_endline "\nWaiting for opponent to connect...";
   accept fd
 
 let conn_client fd = 
