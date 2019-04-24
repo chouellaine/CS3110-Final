@@ -128,7 +128,17 @@ let rec playGame st =
             |AI i -> 
               let st'' = 
                 st.game |> getScore |> get_sugg_mv st' (get_level i)
-                |> update_state st' in print_board st''.pieces; playGame st''
+                |> update_state st' in print_board st''.pieces; 
+              begin 
+                match checkWin st'' with 
+                | Win (st',c) when c = Black -> print_board st'.pieces;
+                  helper_string "Game Over. Black Wins!"; gameOver st
+                | Win (st',c) when c = Red -> print_board st'.pieces;
+                  helper_string "Game Over. Red Wins!"; gameOver st
+                | Win _ -> failwith "BUG in playGame, Win match!"
+                | Legal t -> playGame t
+                | Illegal -> failwith "failed in playGame, AI made illegal move"
+              end 
             |Client | Host -> sendMove st' st str
           end 
         | Illegal -> helper_string "Illegal move. Try again.\n>"; 

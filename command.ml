@@ -72,7 +72,7 @@ let rec parse_rec lst newlst =
                        String.lowercase_ascii h2 = "game" -> 
     parse_rec t (h2::h1::newlst)
   | h :: t when h = "move" -> move_parse false t ["move"]
-  | _ -> failwith "shouldn't get here"
+  | _ -> raise Malformed
 
 let convert_coord c = 
   if String.length c > 2 then raise Malformed else 

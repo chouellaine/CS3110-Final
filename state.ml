@@ -223,13 +223,16 @@ let update_state st mv =
              then (st.moves_without_capture + 1) else 0;  
   } 
 
+let checkWin st = 
+  match get_all_moves st with 
+  | [] ->  let color = (st.turn mod 2 = 0) in begin match st.game with 
+      |Suicide ->if color then Win (st,Black) else Win (st, Red)
+      |Regular ->if color then Win (st,Red) else Win (st,Black) end
+  | x -> Legal st 
+
 let move st mv = 
-  if List.mem mv (get_all_moves st) then let st' = update_state st mv in 
-    match get_all_moves st' with 
-    | [] ->  let color = (st.turn mod 2 = 0) in begin match st.game with 
-        |Suicide ->if color then Win (st',Red) else Win (st', Black)
-        |Regular ->if color then Win (st',Black) else Win (st',Red) end
-    | x -> Legal st' 
+  if List.mem mv (get_all_moves st) then 
+    let st' = update_state st mv in checkWin st' 
   else Illegal
 
 let get_eval st = 
