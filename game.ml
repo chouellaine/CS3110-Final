@@ -2,8 +2,8 @@ open Yojson.Basic.Util
 open Command
 
 type color = 
-  | Black (* White on ANSI *)
-  | Red (* Magenta on ANSI *)
+  | Black 
+  | Red 
 
 type piece = 
   | P of (color * (int * int)) 
@@ -18,12 +18,11 @@ type t = {
   pieces: piece list;
   turn: int; 
   moves_without_capture: int; 
-  opp: player; (* if opp = host, then user is client
-                  elif opp = client then user is host 
-                  else user is a player playing against AI *)
+  opp: player;
   connection: connection option 
 }
 
+(** [UnknownMove] is raised when a malformed coordinate is detected *)
 exception UnknownMove  
 
 let to_game x = 
@@ -32,6 +31,7 @@ let to_game x =
   else if str = "regular" then Regular 
   else failwith "unknown game type"
 
+(**  *)
 let to_player x  = 
   let str = String.lowercase_ascii x in 
   if str = "easy ai" then AI Easy
@@ -47,15 +47,16 @@ let to_player x  =
 let set_from_list lst =
   List.fold_left (fun acc el -> if (List.mem el acc) then acc else el :: acc) [] lst
 
-(* if p then piece type is K of (color * (int * int)) 
-   else piece type is P of (color * (int * int)) *)
-let to_coord color p c = 
+(* [to_coord color p c] is a piece on a coordinate. The piece is of color 
+   [color] on coordinate [c] and of type [K] if [king] else it is type [P].
+*)
+let to_coord color king c = 
   match c |> to_string |> convert_coord with 
   | exception Malformed -> raise UnknownMove
-  | coord -> if p then K (color,coord) else P(color,coord) 
+  | coord -> if king then K (color,coord) else P(color,coord) 
 
-(** [room_of_json room] is the room that [room] represents. 
-    Requires: [room] is a valid JSON room representation. *)
+(** [piece_of_json color c] is the piece list that [c] represents. 
+    Requires: [c] is a valid JSON representation. *)
 let piece_of_json color c =  
   let kings = c |> member "kings" |> to_list |>  List.map (to_coord color true) in 
   let pieces = c |> member "pieces" |> to_list |> List.map (to_coord color false) in 
@@ -73,15 +74,18 @@ let from_json json =
     connection = None;
   } 
 
+(**  *)
 let from_coord c = 
   let x = Char.chr (96 + fst c) |> Char.escaped in 
   let y = string_of_int (snd c) in 
   x^y
 
+(**  *)
 let add el l = 
   if l = "" then ({|"|}^(from_coord el)^{|"|}^l) else 
     ({|"|}^(from_coord el)^{|"|}^","^l)
 
+(**  *)
 let rec pieces_of_state rp rk bp bk = function 
   |[]-> rp,rk,bp,bk
   |K (Red,c)::t -> pieces_of_state rp (add c rk) bp bk t
@@ -89,6 +93,7 @@ let rec pieces_of_state rp rk bp bk = function
   |K (Black,c)::t -> pieces_of_state rp rk bp (add c bk) t
   |P (Black,c)::t -> pieces_of_state rp rk (add c bp) bk t
 
+(**  *)
 let player_to_str = function 
   |AI Easy -> "Easy AI" 
   |AI Medium -> "Hard AI"
@@ -102,6 +107,7 @@ let game_to_str = function
   |Regular -> "Regular"
   |Suicide -> "Suicide"
 
+(** [quote str] is [str] in quotes *)
 let quote str = 
   {|"|}^str^{|"|}
 
@@ -124,6 +130,8 @@ let to_json t f_name =
   Yojson.Basic.to_file (f_name^".json") json;
   Unix.chdir ".."
 
+(* [get_pieces t] is the pieces in the game representation [t] *)
 let get_pieces t = t.pieces 
 
+(* [get_pieces t] is the turn in the game representation [t] *)
 let get_turn t = t.turn 

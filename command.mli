@@ -106,5 +106,5 @@ val parse : string -> command
 
 
 (** [convert_coord] is [c] in (x,y) coordinate format
-    Raises Malform if [c] is not within the board range. *)
+    Raises Malformed error if [c] is not within the board range. *)
 val convert_coord : string -> int *int 
