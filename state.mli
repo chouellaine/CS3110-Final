@@ -10,14 +10,14 @@
 val pp_move_lst : ((int * int) list) list -> unit
 
 (** [new_game ()] is the state of a new game. All pieces are on the board in 
-    their original positions and it is red's turn (turn = 1).  *)
+    their original positions and it is black's turn (turn = 1).  *)
 val new_game : unit -> Game.t
 
 (** [get_moves st] is a list of legal moves given the currrent state. *)
 val get_all_moves : Game.t -> ((int * int) list) list 
 
 (** [get_eval st] gets the evaluation of state [st]. As it is implemented here,
-    the evaluation is the number of red pieces minus the number of black pieces 
+    the evaluation is the number of black pieces minus the number of red pieces 
     with normal pieces weighted as 3 points and kings as 5 *)
 val get_eval : Game.t -> float
 
