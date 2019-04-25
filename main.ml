@@ -160,7 +160,7 @@ let rec playNetwork st =
     | Moves -> pp_move_lst (get_all_moves st); playNetwork st
     | Score -> st |> getScore st.game |> print_float; playNetwork st
     | Draw -> sendReq st Draw
-    | StartOver -> sendQuit st
+    | StartOver -> sendMsg st "quit"; main() 
     | Quit -> sendQuit st
     | Save -> helper_string "What do you want to name your save file?";
       save st (read_line ()); quit_str (); Pervasives.exit 0;
