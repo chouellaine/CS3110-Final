@@ -139,13 +139,6 @@ let quit t =
 
 let sendQuit st = sendMsg st "quit"; quit (Some st)
 
-let quitRestart st = 
-  menu_str" Restart, or Quit?" ["Restart";"Quit"];
-  match (matchCommand [StartOver;Quit]) with 
-  | StartOver -> sendMsg st "quit"; failwith "unimpl"
-  | Quit -> sendQuit st
-  | _ -> failwith "failed in gameOver"
-
 let getScore = function 
   |Suicide -> get_eval_suicide 
   |Regular -> get_eval 
@@ -156,8 +149,7 @@ let rec load() =
   | exception End_of_file -> failwith "failed in load"
   | file -> match Yojson.Basic.from_file file with 
     | exception _ -> helper_string "File Error, try again"; load()
-    | j ->  from_json j (*let st = from_json j in print_board st.pieces; Unix.chdir "..";
-                          playLocal st*)
+    | j ->  from_json j 
 
 let rec playNetwork st = 
   if st.moves_without_capture = 39 
@@ -200,7 +192,8 @@ and recvMove st =
 
 and sendMove st m msg = 
   match move st m with 
-  | Legal st' -> updateSpec st' msg; print_board st'.pieces; sendMsg st' msg; recvMove st'
+  | Legal st' -> updateSpec st' msg; print_board st'.pieces; 
+    sendMsg st' msg; recvMove st'
   | Illegal -> helper_string "Illegal move. Try again.\n>"; playNetwork st 
   | _ -> failwith "failed in sendMove"
 
@@ -218,7 +211,8 @@ and matchRequest st r =
     helper_string "Draw Accepted"; gameOverNetwork st;
   | Some (a, Draw), Reject when a=p-> helper_string "Draw Rejected";
     let st' = {st with request = None} in playNetwork st' 
-  | Some (a, Rematch),Accept when a=p ->helper_string "Rematch Accepted"; newNetworkGame st 
+  | Some (a, Rematch),Accept when a=p ->helper_string "Rematch Accepted";
+    newNetworkGame st 
   | Some (a, Rematch), Reject when a=p-> helper_string "Rematch Rejected"; 
     let st' = {st with request = None} in quitRestart st'
   | _ -> failwith "failed in matchRequest"
@@ -283,6 +277,13 @@ and gameOverNetwork st =
   menu_str" Rematch, Restart, or Quit?" ["Rematch";"Restart";"Quit"];
   match (matchCommand [Rematch;StartOver;Quit]) with 
   | Rematch -> sendReq st Rematch
+  | StartOver -> sendMsg st "quit"; main()
+  | Quit -> sendQuit st
+  | _ -> failwith "failed in gameOver"
+
+and quitRestart st = 
+  menu_str" Restart, or Quit?" ["Restart";"Quit"];
+  match (matchCommand [StartOver;Quit]) with 
   | StartOver -> sendMsg st "quit"; main()
   | Quit -> sendQuit st
   | _ -> failwith "failed in gameOver"
@@ -392,7 +393,7 @@ and hostGame f_list conn_fd g =
   let defaultGame = new_game() in 
   let initGame = {defaultGame with connection = Some ((Some f_list),conn_fd);
                                    game = g; opp = Client} in 
-  print_board initGame.pieces; playNetwork initGame;
+  print_board initGame.pieces; playNetwork initGame
 
 and clientGame fd = 
   let getGame = Bytes.to_string (spec_receive fd) in 
@@ -410,7 +411,7 @@ and specGame fd =
   let initGame = {defaultGame with connection = Some (None,fd);
                                    game = gtype; opp = Player} in
   let recv = Bytes.to_string (client_receive fd) in 
-  spec_play fd recv initGame;
+  spec_play fd recv initGame
 
 and sendGame fd g = 
   let g_str = game_to_str g in 
