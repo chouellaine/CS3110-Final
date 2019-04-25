@@ -299,7 +299,7 @@ and move_local st m =
   | Legal st' -> print_board st'.pieces; 
     begin match st.opp with 
       |Player -> play_local st'
-      |AI i ->  let st'' = 
+      |AI i ->  let st'' = print_board st'.pieces;
                   st.game |> get_score |> get_sugg_mv st' (get_level i)
                   |> update_state st' in print_board st''.pieces;
         begin 
@@ -413,7 +413,7 @@ and client_game fd =
   print_board initGame.pieces; recvMove initGame
 
 and spec_game fd =
-  let getGame = Bytes.to_string (spec_receive fd) in print_string getGame;
+  let getGame = Bytes.to_string (spec_receive fd) in 
   let gtype = Game.to_game_type getGame in 
   let defaultGame = new_game() in 
   let initGame = {defaultGame with connection = Some (None,fd);
