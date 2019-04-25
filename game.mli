@@ -33,14 +33,15 @@ type t = {
   connection: connection option 
 }
 
-(**  *)
-val to_game : string -> Command.gtype
+(** [to_game_type s] is the game type represented by [s] *)
+val to_game_type : string -> Command.gtype
 
-(**  *)
+(** [from_json json] is the type [t] representation of the game in [json] *)
 val from_json : Yojson.Basic.json -> t
 
-(**  *)
+(** [to_json t f_name] saves a json file containing the game represented 
+    by [t] *)
 val to_json : t -> string -> unit
 
-(**  *)
+(** [game_to_str g] is the string representation of game type [g] *)
 val game_to_str : Command.gtype -> string

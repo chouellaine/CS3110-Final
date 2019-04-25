@@ -4,7 +4,7 @@ open Sockets
 open Unix
 open Ai
 open Game 
-(*Easy = 3 | Medium = 6 | Hard = 9 | AlphaZero  = 12*)
+(* Easy = 3 | Medium = 6 | Hard = 9 | AlphaZero  = 12 *)
 (*  Game Infrastucture:
 
     playWatch(): Play Game or Watch Game
@@ -347,7 +347,7 @@ and hostGame f_list conn_fd g =
 
 and clientGame fd = 
   let getGame = Bytes.to_string (spec_receive fd) in 
-  let gtype = Game.to_game getGame in 
+  let gtype = Game.to_game_type getGame in 
   let defaultGame = new_game() in 
   let initGame = {defaultGame with connection = Some (None,fd);
                                    game = gtype; opp = Host} in
@@ -356,7 +356,7 @@ and clientGame fd =
 
 and specGame fd =
   let getGame = Bytes.to_string (spec_receive fd) in 
-  let gtype = Game.to_game getGame in 
+  let gtype = Game.to_game_type getGame in 
   let defaultGame = new_game() in 
   let initGame = {defaultGame with connection = Some (None,fd);
                                    game = gtype; opp = Player} in

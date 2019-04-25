@@ -25,13 +25,13 @@ type t = {
 (** [UnknownMove] is raised when a malformed coordinate is detected *)
 exception UnknownMove  
 
-let to_game x = 
-  let str = String.(trim (lowercase_ascii x)) in 
+let to_game_type s = 
+  let str = String.(trim (lowercase_ascii s)) in 
   if str = "suicide" then Suicide 
   else if str = "regular" then Regular 
   else failwith "unknown game type"
 
-(**  *)
+(** TODO ELLAINE *)
 let to_player x  = 
   let str = String.lowercase_ascii x in 
   if str = "easy ai" then AI Easy
@@ -66,7 +66,7 @@ let from_json json =
   let red = json |> member "red" |> piece_of_json Red in 
   let black = json |> member "black" |> piece_of_json Black in 
   {
-    game = json|> member "game" |> to_string |> to_game;
+    game = json|> member "game" |> to_string |> to_game_type;
     pieces = red@black |> set_from_list;
     turn = json |> member "turn" |> to_int;
     moves_without_capture = json|>member "moves"|>to_int;
@@ -74,38 +74,38 @@ let from_json json =
     connection = None;
   } 
 
-(**  *)
+(** [from_coord c] is the string representation of a coordinate *)
 let from_coord c = 
   let x = Char.chr (96 + fst c) |> Char.escaped in 
   let y = string_of_int (snd c) in 
   x^y
 
-(**  *)
+(** TODO ELLAINE *)
 let add el l = 
   if l = "" then ({|"|}^(from_coord el)^{|"|}^l) else 
     ({|"|}^(from_coord el)^{|"|}^","^l)
 
-(**  *)
+(** TODO ELLAINE *)
 let rec pieces_of_state rp rk bp bk = function 
-  |[]-> rp,rk,bp,bk
-  |K (Red,c)::t -> pieces_of_state rp (add c rk) bp bk t
-  |P (Red,c)::t -> pieces_of_state (add c rp) rk bp bk t
-  |K (Black,c)::t -> pieces_of_state rp rk bp (add c bk) t
-  |P (Black,c)::t -> pieces_of_state rp rk (add c bp) bk t
+  | []-> rp,rk,bp,bk
+  | K (Red,c)::t -> pieces_of_state rp (add c rk) bp bk t
+  | P (Red,c)::t -> pieces_of_state (add c rp) rk bp bk t
+  | K (Black,c)::t -> pieces_of_state rp rk bp (add c bk) t
+  | P (Black,c)::t -> pieces_of_state rp rk (add c bp) bk t
 
-(**  *)
+(** [player_to_str p] is the string representation of player [p]. *)
 let player_to_str = function 
-  |AI Easy -> "Easy AI" 
-  |AI Medium -> "Hard AI"
-  |AI Hard -> "Medium AI"
-  |AI AlphaZero -> "AlphaZero AI"
-  |Player -> "Player"
-  |Client -> "Client"
-  |Host -> "Host"
+  | AI Easy -> "Easy AI" 
+  | AI Medium -> "Hard AI"
+  | AI Hard -> "Medium AI"
+  | AI AlphaZero -> "AlphaZero AI"
+  | Player -> "Player"
+  | Client -> "Client"
+  | Host -> "Host"
 
 let game_to_str = function 
-  |Regular -> "Regular"
-  |Suicide -> "Suicide"
+  | Regular -> "Regular"
+  | Suicide -> "Suicide"
 
 (** [quote str] is [str] in quotes *)
 let quote str = 
