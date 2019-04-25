@@ -60,6 +60,7 @@ type command =
   | Watch
   | Yes 
   | No 
+  | Board
   | GameType of gtype
   | Level of diff  
 

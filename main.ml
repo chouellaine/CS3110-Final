@@ -157,6 +157,7 @@ let rec playNetwork st =
   else begin move_str();
     let str= read_line() in 
     match parse str with 
+    | Board -> print_board st.pieces; playNetwork st
     | Moves -> pp_move_lst (get_all_moves st); playNetwork st
     | Score -> st |> getScore st.game |> print_float; playNetwork st
     | Draw -> sendReq st Draw
@@ -187,7 +188,7 @@ and recvMove st =
   | exception Malformed -> failwith "received malformed command in recvMove"
   | exception Empty -> failwith "received empty command in recvMove"
   | Opponent _ | Start | Watch | Level _ | No | Score | Moves |StartOver
-  | HostClient _ | Env _ | Load | Play | GameType _ | New | Yes | Save
+  | HostClient _ | Env _ | Load | Play | GameType _ | New | Yes | Save | Board
     ->  failwith "received invalid command in recvMove"
 
 and sendMove st m msg = 
@@ -324,6 +325,7 @@ and playLocal st =
   then forceDraw st gameOver
   else begin move_str();
     match parse(read_line()) with 
+    | Board -> print_board st.pieces; playLocal st
     | Moves -> pp_move_lst (get_all_moves st); playLocal st
     | Score -> st |> getScore st.game |> print_float; playLocal st
     | Save ->  helper_string "What do you want to name your save file?";
