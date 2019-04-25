@@ -34,7 +34,7 @@ exception Empty
 
 exception Malformed
 
-(*Prints list - Debugging Purpose*)
+(* Prints list - Debugging Purposes *)
 let rec print_list = function 
   | [] -> ()
   | h::t -> ANSITerminal.(print_string [blue] 
@@ -81,6 +81,7 @@ let convert_coord c =
     | x,y when x > 96 && x < 105 && y > 48 && y < 57 -> (x mod 96,y mod 48)
     | _,_ -> raise Malformed
 
+(** [str_to_diff str] is the appropriate difficulty for the input [str] *) 
 let str_to_diff str = 
   if str = "easy" then Level Easy
   else if str = "medium" then Level Medium 

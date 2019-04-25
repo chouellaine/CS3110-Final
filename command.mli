@@ -30,13 +30,21 @@ type action = (int*int) list
     or the [AI] *)
 type ptype = Player | AI 
 
+(** [sd] is [Same] when the game is being played on the same computer and 
+    [Different] if the game is being played on two different computers. *)
 type sd = Same | Different
 
+(** [hc] is [Host] when hosting a game and [Client] when joining in on a hosted 
+    game. *)
 type hc = Host | Client 
 
+(** [gtype] is the game type. [Regular] is normal checkers. In [Suicide] you 
+    win by losing all of your pieces. *)
 type gtype = Suicide | Regular 
 
+(** [diff] the AI's difficulty *)
 type diff = Easy | Medium | Hard | AlphaZero
+
 (** The type [command] represents a player command that is decomposed
     into a verb and possibly an action. *)
 type command = 

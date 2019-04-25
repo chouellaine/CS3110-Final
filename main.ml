@@ -130,7 +130,7 @@ let rec playGame st =
                 st.game |> getScore |> get_sugg_mv st' (get_level i)
                 |> update_state st' in print_board st''.pieces; 
               begin 
-                match checkWin st'' with 
+                match check_win st'' with 
                 | Win (st',c) when c = Black -> print_board st'.pieces;
                   helper_string "Game Over. Black Wins!"; gameOver st
                 | Win (st',c) when c = Red -> print_board st'.pieces;

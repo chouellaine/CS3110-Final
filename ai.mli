@@ -2,7 +2,7 @@
    The functionality necessay for playing against a computer opponent
 *)
 
-(* [minimax st depth curr_path sugg_mvs] is the best evaluation for the 
+(* [minimax st depth eval_fn] is the best evaluation given by [eval_fn] for the 
    current player and the move sequence recommended given the game specified by 
    state [st]. The minimax algorithm searches up to [depth] moves ahead. 
 *)
@@ -13,10 +13,10 @@ val minimax : Game.t -> int -> (Game.t -> float) -> (float * ((int*int) list) li
 *)
 val get_sugg_mv : Game.t -> int -> (Game.t -> float) -> (int*int) list
 
-(* [pruned_minimax st depth curr_path sugg_mvs] is the best evaluation for the 
-   current player and the move sequence recommended given the game specified by 
-   state [st]. The minimax algorithm searches up to [depth] moves ahead, and 
-   uses the alpha beta pruning optimization. 
+(* [pruned_minimax st depth eval_fn] is the best evaluation given by [eval_fn] 
+   for the current player and the move sequence recommended given the game 
+   specified by state [st]. This minimax algorithm searches up to [depth] moves 
+   ahead and uses the alpha beta pruning optimization.
 *)
 val pruned_minimax : Game.t -> int -> (Game.t -> float) -> (float * ((int*int) list) list)
 

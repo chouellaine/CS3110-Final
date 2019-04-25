@@ -2,8 +2,8 @@ open Yojson.Basic.Util
 open Command
 
 type color = 
-  | Black (*white on ANSI *)
-  | Red (*magenta on ANSI*)
+  | Black (* White on ANSI *)
+  | Red (* Magenta on ANSI *)
 
 type piece = 
   | P of (color * (int * int)) 
