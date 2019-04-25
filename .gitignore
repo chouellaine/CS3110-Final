@@ -21,4 +21,4 @@ _build
 \#*\#
 .DS_Store
 
-saves
+saves/*.json
