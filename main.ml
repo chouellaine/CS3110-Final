@@ -356,7 +356,6 @@ and clientGame fd =
 
 and specGame fd =
   let getGame = Bytes.to_string (spec_receive fd) in 
-  print_string getGame;
   let gtype = Game.to_game getGame in 
   let defaultGame = new_game() in 
   let initGame = {defaultGame with connection = Some (None,fd);
