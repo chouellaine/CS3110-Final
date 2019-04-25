@@ -20,9 +20,7 @@ type t = {
   pieces: piece list;
   turn: int; 
   moves_without_capture: int; 
-  opp: player; (* if opp = host, then user is client
-                  elif opp = client then user is host 
-                  else user is a player playing against AI *)
+  opp: player; 
   connection: connection option; 
   request: (player*request) option;
 }
@@ -36,7 +34,7 @@ let to_game_type s =
   else if str = "regular" then Regular 
   else failwith "unknown game type"
 
-(** TODO ELLAINE *)
+(** [to_player x] is the player type that the string [x] represents *)
 let to_player x  = 
   let str = String.lowercase_ascii x in 
   if str = "easy ai" then AI Easy
@@ -52,9 +50,8 @@ let to_player x  =
 let set_from_list lst =
   List.fold_left (fun acc el -> if (List.mem el acc) then acc else el :: acc) [] lst
 
-(* [to_coord color p c] is a piece on a coordinate. The piece is of color 
-   [color] on coordinate [c] and of type [K] if [king] else it is type [P].
-*)
+(** [to_coord color p c] is a piece on a coordinate. The piece is of color 
+    [color] on coordinate [c] and of type [K] if [king] else it is type [P]. *)
 let to_coord color king c = 
   match c |> to_string |> convert_coord with 
   | exception Malformed -> raise UnknownMove
@@ -86,12 +83,14 @@ let from_coord c =
   let y = string_of_int (snd c) in 
   x^y
 
-(** TODO ELLAINE *)
+(** [add el l] is the the string representation of the coordinates [el] with 
+    [l] appended *)
 let add el l = 
   if l = "" then ({|"|}^(from_coord el)^{|"|}^l) else 
     ({|"|}^(from_coord el)^{|"|}^","^l)
 
-(** TODO ELLAINE *)
+(** [pieces_of_state rp rk bp bk p_lst] is the string representation of all 
+    the pieces in [p_lst] added to the existing pieces [rp], [rk], [bp], [bk] *)
 let rec pieces_of_state rp rk bp bk = function 
   | []-> rp,rk,bp,bk
   | K (Red,c)::t -> pieces_of_state rp (add c rk) bp bk t
