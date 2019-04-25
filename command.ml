@@ -26,6 +26,7 @@ type command =
   | Watch
   | Yes 
   | No 
+  | Board
   | GameType of gtype
   | Level of diff  
 
@@ -113,6 +114,7 @@ let read_cmd = function
   | h :: [] when String.lowercase_ascii h = "client" -> HostClient Client
   | h :: [] when String.lowercase_ascii h = "yes" -> Yes
   | h :: [] when String.lowercase_ascii h = "no" -> No
+  | h :: [] when String.lowercase_ascii h = "board" -> Board
   | h :: [] when String.lowercase_ascii h = "move" -> raise Malformed 
   | h :: _ :: [] when String.lowercase_ascii h = "move" -> raise Malformed
   | h :: t  when String.lowercase_ascii h = "move" -> Move (List.map convert_coord t)

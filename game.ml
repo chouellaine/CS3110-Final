@@ -13,13 +13,18 @@ type player = AI of diff | Player | Host | Client
 
 type connection = ((Unix.file_descr*Unix.file_descr) list option) * Unix.file_descr
 
+type request = Rematch | Draw  
+
 type t = {
   game: gtype;
   pieces: piece list;
   turn: int; 
   moves_without_capture: int; 
-  opp: player;
-  connection: connection option 
+  opp: player; (* if opp = host, then user is client
+                  elif opp = client then user is host 
+                  else user is a player playing against AI *)
+  connection: connection option; 
+  request: (player*request) option;
 }
 
 (** [UnknownMove] is raised when a malformed coordinate is detected *)
@@ -72,6 +77,7 @@ let from_json json =
     moves_without_capture = json|>member "moves"|>to_int;
     opp = json |> member "opp" |> to_string |> to_player;
     connection = None;
+    request = None;
   } 
 
 (** [from_coord c] is the string representation of a coordinate *)

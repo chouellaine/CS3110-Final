@@ -22,6 +22,8 @@ type player = AI of diff | Player | Host | Client
    different computers with a host and client. *)
 type connection = ((Unix.file_descr*Unix.file_descr) list option)*Unix.file_descr
 
+type request = Rematch | Draw  
+
 (** [t] is the representation of saved game that can be converted to and from 
     json format. *)
 type t = {
@@ -30,7 +32,8 @@ type t = {
   turn: int; 
   moves_without_capture: int; 
   opp: player;
-  connection: connection option 
+  connection: connection option;
+  request: (player*request) option
 }
 
 (** [to_game_type s] is the game type represented by [s] *)

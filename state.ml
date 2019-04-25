@@ -18,6 +18,7 @@ let new_game() =
     moves_without_capture = 0; 
     opp = Player;
     connection = None;
+    request = None;
   }
 
 (** [get_int_letter num] is the board character corresponding to the integer 
