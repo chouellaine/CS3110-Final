@@ -7,12 +7,12 @@ let new_game() =
   {
     game = Regular;
     pieces = [
-      P (Black,(1,1));P (Black,(3,1));P (Black,(5,1));P (Black,(7,1));P (Black,(2,2));
-      P (Black,(4,2));P (Black,(6,2));P (Black,(8,2));P (Black,(1,3));P (Black,(3,3));
-      P (Black,(5,3));P (Black,(7,3));P (Red,(2,8));P (Red,(4,8));P (Red,(6,8));
-      P (Red,(8,8));P (Red,(1,7));P (Red,(3,7));P (Red,(5,7));
-      P (Red,(7,7));P (Red,(2,6));P (Red,(4,6));P (Red,(6,6));
-      P (Red,(8,6))
+      P (Black,(1,1));P (Black,(3,1));P (Black,(5,1));P (Black,(7,1));
+      P (Black,(2,2)); P (Black,(4,2));P (Black,(6,2));P (Black,(8,2));
+      P (Black,(1,3));P (Black,(3,3));P (Black,(5,3));P (Black,(7,3));
+      P (Red,(2,8));P (Red,(4,8));P (Red,(6,8));P (Red,(8,8));P (Red,(1,7));
+      P (Red,(3,7));P (Red,(5,7));P (Red,(7,7));P (Red,(2,6));P (Red,(4,6));
+      P (Red,(6,6));P (Red,(8,6))
     ];
     turn = 1; 
     moves_without_capture = 0; 
@@ -93,7 +93,8 @@ let taken_piece start dest color piece_lst =
   if in_bounds dest && (piece_at dest piece_lst) = None then 
     match piece_at in_between piece_lst with
     | None -> None
-    | Some piece -> if (get_color piece) <> color then (Some in_between) else None
+    | Some piece -> if (get_color piece) <> color then (Some in_between) 
+      else None
   else None
 
 (** [get_jump_coords piece piece_lst] is the list of coordinates [piece] can 
@@ -196,7 +197,7 @@ let rec remove_pieces remove_lst piece_lst acc =
     if List.mem coord remove_lst then remove_pieces remove_lst t acc 
     else remove_pieces remove_lst t (h :: acc)
 
-(** [update_piece_list p_lst mv] is the new piece list after performing move [mv] 
+(** [update_piece_list p_lst mv] is the new piece list after performing [mv] 
     with piece list [piece_lst]. 
     Requires: [mv] is a valid move. *)
 let update_piece_list piece_lst mv = 
