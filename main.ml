@@ -160,12 +160,12 @@ let rec playNetwork st =
     | Moves -> pp_move_lst (get_all_moves st); playNetwork st
     | Score -> st |> getScore st.game |> print_float; playNetwork st
     | Draw -> sendReq st Draw
-    | StartOver -> sendQuit
-    | Quit -> sendQuit
+    | StartOver -> sendQuit st
+    | Quit -> sendQuit st
     | Save -> helper_string "What do you want to name your save file?";
       save st (read_line ()); quit_str (); Pervasives.exit 0;
     | Move m -> sendMove st m str
-    | Rematch -> helper_string "Must request a Draw before rematching."; recvMove st
+    | Rematch -> helper_string "Must request a draw before rematching."; playNetwork st
     | exception Malformed -> invalid_str None; playNetwork st
     | exception Empty -> empty_str(); playNetwork st
     | Opponent _ | Start | Watch | Level _ | No  | Accept | Reject
@@ -182,7 +182,7 @@ and recvMove st =
   | Reject -> matchRequest st Reject
   | Draw -> respReq st Draw
   | Rematch -> respReq st Rematch 
-  | Quit -> helper_string "Your Opponenet has left the game."; quitRestart st
+  | Quit -> helper_string "Your Opponent has left the game."; quitRestart st
   | Move m -> respMove st m msg 
   | exception Malformed -> failwith "received malformed command in recvMove"
   | exception Empty -> failwith "received empty command in recvMove"
@@ -205,16 +205,17 @@ and respMove st m msg =
 
 and matchRequest st r = 
   let p = getPlayer st in  
+  let st' = {st with request = None} in 
   match st.request,r with 
   | None, _ -> failwith "received invalid command from opponent in matchRequest"
-  | Some (a, Draw), Accept when a=p -> 
-    helper_string "Draw Accepted"; gameOverNetwork st;
+  | Some (a, Draw), Accept when a=p -> helper_string "Draw Accepted"; 
+    gameOverNetwork st';
   | Some (a, Draw), Reject when a=p-> helper_string "Draw Rejected";
-    let st' = {st with request = None} in playNetwork st' 
+    playNetwork st' 
   | Some (a, Rematch),Accept when a=p ->helper_string "Rematch Accepted";
-    newNetworkGame st 
+    newNetworkGame st' 
   | Some (a, Rematch), Reject when a=p-> helper_string "Rematch Rejected"; 
-    let st' = {st with request = None} in quitRestart st'
+    quitRestart st'
   | _ -> failwith "failed in matchRequest"
 
 and sendReq st req = 
@@ -252,26 +253,29 @@ and acceptReject st req =
       | Rematch -> "Rematch" 
       | Draw -> "Draw"
     end in menu_str(" Your opponent offers a "^str^".") ["Accept";"Reject"];
+  let st' = {st with request = None} in 
   match (matchCommand [Accept; Reject]) with 
-  | Accept -> helper_string (str^" Accepted"); sendMsg st "accept"; 
+  | Accept -> helper_string (str^" Accepted"); sendMsg st' "accept"; 
     begin match req with 
-      | Rematch -> helper_string "Rematch Accepted"; newNetworkGame st 
-      | Draw -> helper_string "Draw Accepted"; gameOverNetwork st
+      | Rematch -> newNetworkGame st' 
+      | Draw -> gameOverNetwork st'
     end 
-  | Reject -> helper_string (str^" Rejected"); sendMsg st "reject"; 
-    let st' = {st with request = None} in 
+  | Reject -> helper_string (str^" Rejected"); sendMsg st' "reject"; 
     begin match req with 
       | Rematch -> helper_string "Rematch Rejected"; quitRestart st'
       | Draw -> print_board st'.pieces; recvMove st' 
     end 
-  | _ -> failwith "failed in draw"
+  | _ -> failwith "failed in acceptReject"
 
 and newNetworkGame st =
   newgame_str(); let defaultGame = new_game() in 
   let initGame = {defaultGame with opp = st.opp; connection = st.connection;
                                    game=st.game; } in 
   print_board initGame.pieces;
-  playNetwork initGame
+  match st.opp with 
+  | Client -> playNetwork initGame
+  | Host -> recvMove initGame
+  | _ -> failwith "failed in newNetworkGame"
 
 and gameOverNetwork st =   
   menu_str" Rematch, Restart, or Quit?" ["Rematch";"Restart";"Quit"];
@@ -347,11 +351,11 @@ and rematchLocal st =
 and draw st =
   match st.opp with 
   | Host | Client -> failwith "failed in draw, Client/Host"
-  | AI _ -> helper_string " Draw accepted"; gameOver st 
+  | AI _ -> helper_string " Draw Accepted"; gameOver st 
   | Player -> 
     menu_str(" Your opponent offers a draw.") ["Accept";"Reject"];
     match (matchCommand [Accept; Reject]) with 
-    | Accept -> helper_string "Draw Accepted."; gameOver st 
+    | Accept -> helper_string "Draw Accepted"; gameOver st 
     | Reject -> helper_string"Draw Rejected. It is still your turn."; playLocal st 
     | _ -> failwith "failed in draw"
 
@@ -537,4 +541,4 @@ and main () =
   playWatch()
 
 (* Execute the game engine. *)
-let () = main()
+let () = main() 
