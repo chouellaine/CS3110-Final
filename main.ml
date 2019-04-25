@@ -108,9 +108,56 @@ let rec matchCommand opt =
   |Malformed -> invalid_str None; matchCommand opt
   |Empty -> empty_str(); matchCommand opt 
 
+let sendMsg st str = 
+  match st.connection with 
+  | None -> failwith "connection info not found in sendMove"
+  | Some x -> 
+    let fd = snd x in 
+    let sent = send_substring fd str 0 (String.length str) [] in 
+    if sent < String.length str then 
+      (failwith "The whole command did not send. There is probably a bug.";)
+
+let getPlayer st = 
+  match st.opp with 
+  |Client -> Host 
+  | Host -> Client 
+  | _ -> failwith "getPlayer"
+
+let save t s = to_json t s; helper_string " Game Saved Successfully"
+
+let quit t = 
+  match t with 
+  |None -> quit_str(); Pervasives.exit 0
+  |Some x -> 
+    menu_str " Save game before quitting?" ["Yes";"No"];
+    match (matchCommand [Yes;No]) with 
+    | Yes -> 
+      helper_string "What do you want to name your save file?";
+      save x (read_line ()); quit_str (); Pervasives.exit 0
+    | No -> quit_str(); Pervasives.exit 0
+    | _ -> failwith "failed in quit"
+
+let sendQuit st = sendMsg st "quit"; quit (Some st)
+
+let quitRestart st = 
+  menu_str" Restart, or Quit?" ["Restart";"Quit"];
+  match (matchCommand [StartOver;Quit]) with 
+  | StartOver -> sendMsg st "quit"; failwith "unimpl"
+  | Quit -> sendQuit st
+  | _ -> failwith "failed in gameOver"
+
 let getScore = function 
   |Suicide -> get_eval_suicide 
   |Regular -> get_eval 
+
+let rec load() = 
+  Unix.chdir "saves";
+  match (read_line()^".json") with 
+  | exception End_of_file -> failwith "failed in load"
+  | file -> match Yojson.Basic.from_file file with 
+    | exception _ -> helper_string "File Error, try again"; load()
+    | j ->  from_json j (*let st = from_json j in print_board st.pieces; Unix.chdir "..";
+                          playLocal st*)
 
 let rec playNetwork st = 
   if st.moves_without_capture = 39 
@@ -123,7 +170,8 @@ let rec playNetwork st =
     | Draw -> sendReq st Draw
     | StartOver -> sendQuit
     | Quit -> sendQuit
-    | Save -> save st; playNetwork st
+    | Save -> helper_string "What do you want to name your save file?";
+      save st (read_line ()); quit_str (); Pervasives.exit 0;
     | Move m -> sendMove st m str
     | Rematch -> helper_string "Must request a Draw before rematching."; recvMove st
     | exception Malformed -> invalid_str None; playNetwork st
@@ -175,21 +223,6 @@ and matchRequest st r =
     let st' = {st with request = None} in quitRestart st'
   | _ -> failwith "failed in matchRequest"
 
-and sendMsg st str = 
-  match st.connection with 
-  | None -> failwith "connection info not found in sendMove"
-  | Some x -> 
-    let fd = snd x in 
-    let sent = send_substring fd str 0 (String.length str) [] in 
-    if sent < String.length str then 
-      (failwith "The whole command did not send. There is probably a bug.";)
-
-and getPlayer st = 
-  match st.opp with 
-  |Client -> Host 
-  | Host -> Client 
-  | _ -> failwith "getPlayer"
-
 and sendReq st req = 
   let p = getPlayer st in  
   match st.request with 
@@ -224,32 +257,20 @@ and acceptReject st req =
       match req with  
       | Rematch -> "Rematch" 
       | Draw -> "Draw"
-      | _ -> failwith "acceptReject"
     end in menu_str(" Your opponent offers a "^str^".") ["Accept";"Reject"];
   match (matchCommand [Accept; Reject]) with 
   | Accept -> helper_string (str^" Accepted"); sendMsg st "accept"; 
     begin match req with 
       | Rematch -> helper_string "Rematch Accepted"; newNetworkGame st 
       | Draw -> helper_string "Draw Accepted"; gameOverNetwork st
-      | _ -> failwith "failed in acceptReject" 
     end 
   | Reject -> helper_string (str^" Rejected"); sendMsg st "reject"; 
     let st' = {st with request = None} in 
     begin match req with 
       | Rematch -> helper_string "Rematch Rejected"; quitRestart st'
       | Draw -> print_board st'.pieces; recvMove st' 
-      | _ -> failwith "failed in acceptReject" 
     end 
   | _ -> failwith "failed in draw"
-
-and quitRestart st = 
-  menu_str" Restart, or Quit?" ["Restart";"Quit"];
-  match (matchCommand [StartOver;Quit]) with 
-  | StartOver -> sendMsg st "quit"; failwith "unimpl"
-  | Quit -> sendQuit st
-  | _ -> failwith "failed in gameOver"
-
-and sendQuit st = sendMsg st "quit"; quit (Some st)
 
 and newNetworkGame st =
   newgame_str(); let defaultGame = new_game() in 
@@ -265,18 +286,6 @@ and gameOverNetwork st =
   | StartOver -> sendMsg st "quit"; main()
   | Quit -> sendQuit st
   | _ -> failwith "failed in gameOver"
-
-and save t = to_json t; helper_string " Game Saved Successfully";
-
-and quit t = 
-  match t with 
-  |None -> quit_str(); Pervasives.exit 0
-  |Some x -> 
-    menu_str " Save game before quitting?" ["Yes";"No"];
-    match (matchCommand [Yes;No]) with 
-    | Yes -> save x; quit_str(); Pervasives.exit 0 
-    | No -> quit_str(); Pervasives.exit 0; 
-    | _ -> failwith "failed in quit"
 
 and moveLocal st m = 
   match move st m with 
@@ -312,7 +321,8 @@ and playLocal st =
     match parse(read_line()) with 
     | Moves -> pp_move_lst (get_all_moves st); playLocal st
     | Score -> st |> getScore st.game |> print_float; playLocal st
-    | Save -> save st; playLocal st
+    | Save ->  helper_string "What do you want to name your save file?";
+      save st (read_line ()); quit_str (); Pervasives.exit 0;
     | Draw -> helper_string "Draw Requested"; draw st
     | StartOver -> helper_string "Restarting Checkers."; main()
     | Quit -> quit(Some st)
@@ -491,15 +501,6 @@ and gameType() =
   | Quit -> quit None
   | _ -> failwith "failed in gameType"
 
-and load() = 
-  Unix.chdir "saves";
-  match (read_line()^".json") with 
-  | exception End_of_file -> ()
-  | file -> match Yojson.Basic.from_file file with 
-    | exception _ -> helper_string "File Error, try again"; load()
-    | j -> let st = from_json j in print_board st.pieces; Unix.chdir "..";
-      playLocal st
-
 and loadNew() = 
   menu_str " Load Game or New Game?" ["Load Game";"New Game"];
   match (matchCommand [ Load; New ; Quit ]) with 
@@ -516,7 +517,7 @@ and loadNew() =
     list_files dh;
     print_string "\n";
     Unix.closedir dh;
-    load()
+    let st = load() in print_board st.pieces; Unix.chdir ".."; playLocal st
   | New -> gameType() 
   | Quit -> quit None
   |  _ -> failwith "failed in loadNew"
