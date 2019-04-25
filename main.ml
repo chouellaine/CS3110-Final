@@ -164,7 +164,7 @@ let rec playNetwork st =
     | StartOver -> sendMsg st "quit"; main() 
     | Quit -> sendQuit st
     | Save -> helper_string "What do you want to name your save file?";
-      save st (read_line ()); quit_str (); Pervasives.exit 0;
+      save st (read_line ()); playNetwork st;
     | Move m -> sendMove st m str
     | Rematch -> helper_string "Must request a draw before rematching."; playNetwork st
     | exception Malformed -> invalid_str None; playNetwork st
@@ -329,7 +329,7 @@ and playLocal st =
     | Moves -> pp_move_lst (get_all_moves st); playLocal st
     | Score -> st |> getScore st.game |> print_float; playLocal st
     | Save ->  helper_string "What do you want to name your save file?";
-      save st (read_line ()); quit_str (); Pervasives.exit 0;
+      save st (read_line ()); playLocal st;
     | Draw -> helper_string "Draw Requested"; draw st
     | StartOver -> helper_string "Restarting Checkers."; main()
     | Quit -> quit(Some st)
