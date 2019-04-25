@@ -351,7 +351,7 @@ and clientGame fd =
   let defaultGame = new_game() in 
   let initGame = {defaultGame with connection = Some (None,fd);
                                    game = gtype; opp = Host} in
-  let recv = Bytes.to_string (client_receive fd) in 
+  let recv = Bytes.to_string (client_receive fd) in
   update None fd recv (initGame);
 
 and specGame fd =
