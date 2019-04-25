@@ -143,22 +143,22 @@ and recvMove st =
   | Draw -> respReq st Draw
   | Rematch -> respReq st Rematch 
   | Quit -> helper_string "Your Opponenet has left the game."; quitRestart st
-  | Move m -> respMove st m 
+  | Move m -> respMove st m msg 
   | exception Malformed -> failwith "received malformed command in recvMove"
   | exception Empty -> failwith "received empty command in recvMove"
   | Opponent _ | Start | Watch | Level _ | No | Score | Moves |StartOver
   | HostClient _ | Env _ | Load | Play | GameType _ | New | Yes | Save
     ->  failwith "received invalid command in recvMove"
 
-and sendMove st m str = 
+and sendMove st m msg = 
   match move st m with 
-  | Legal st' -> print_board st'.pieces; sendMsg st' str; recvMove st'
+  | Legal st' -> updateSpec st' msg; print_board st'.pieces; sendMsg st' msg; recvMove st'
   | Illegal -> helper_string "Illegal move. Try again.\n>"; playNetwork st 
   | _ -> failwith "failed in sendMove"
 
-and respMove st m = 
+and respMove st m msg = 
   match move st m with 
-  | Legal st' -> print_board st'.pieces; playNetwork st'
+  | Legal st' -> updateSpec st' msg; print_board st'.pieces; playNetwork st'
   | Illegal -> failwith "Opp sent an illegal move in respMove"
   | _ -> failwith "failed in respMove"
 
@@ -356,6 +356,15 @@ and gameOver st =
   | Quit -> quit (Some st)
   | _ -> failwith "failed in gameOver"
 
+and updateSpec st str = 
+  match st.connection with 
+  |Some c -> 
+    begin match fst c with 
+      | Some lst -> write_children lst str
+      | None -> ()
+    end 
+  | None -> failwith "failed in updateSpec, connection not found"
+
 and spec_play fd str st = 
   match parse str with
   | Move m ->
@@ -383,19 +392,32 @@ and clientGame fd =
                                    game = gtype; opp = Host} in
   print_board initGame.pieces; recvMove initGame
 
+and specGame fd =
+  let getGame = Bytes.to_string (spec_receive fd) in 
+  print_string getGame;
+  let gtype = Game.to_game getGame in 
+  let defaultGame = new_game() in 
+  let initGame = {defaultGame with connection = Some (None,fd);
+                                   game = gtype; opp = Player} in
+  let recv = Bytes.to_string (client_receive fd) in 
+  spec_play fd recv initGame;
+
 and sendGame fd g = 
   let g_str = game_to_str g in 
   match send_substring fd g_str 0 (String.length g_str) [] with 
   | exception Unix_error _ -> sendGame fd g
   | x -> if x < String.length g_str then 
       (helper_string "Game Type msg failed to send to client") 
+    else ()
 
 and host g = 
   helper_string "Starting new game.";
   let fd = socket PF_INET SOCK_STREAM 0 in
   let conn_fd,sockaddr = listen_accept fd 4 in
   let f_list = init_spectators fd 4 in
-  sendGame conn_fd g; hostGame f_list conn_fd g
+  sendGame conn_fd g; 
+  write_children f_list (game_to_str g);
+  hostGame f_list conn_fd g
 
 and client () = 
   helper_string "Starting new game.";
@@ -470,16 +492,31 @@ and gameType() =
   | _ -> failwith "failed in gameType"
 
 and load() = 
-  match read_line() with 
+  Unix.chdir "saves";
+  match (read_line()^".json") with 
   | exception End_of_file -> ()
   | file -> match Yojson.Basic.from_file file with 
     | exception _ -> helper_string "File Error, try again"; load()
-    | j -> let st = from_json j in print_board st.pieces; playLocal st
+    | j -> let st = from_json j in print_board st.pieces; Unix.chdir "..";
+      playLocal st
 
 and loadNew() = 
   menu_str " Load Game or New Game?" ["Load Game";"New Game"];
   match (matchCommand [ Load; New ; Quit ]) with 
-  | Load ->  helper_string "Enter game file to load: <file name>.json"; load() 
+  | Load ->  helper_string "Enter game file to load:"; 
+    let rec list_files dh =
+      begin
+        match Unix.readdir dh with 
+        | exception End_of_file -> ()
+        | s when String.length s <= 5 -> list_files dh
+        | s -> Pervasives.print_endline (String.sub s 0 (String.length s - 5)); 
+          list_files dh
+      end in
+    let dh = Unix.opendir "saves" in
+    list_files dh;
+    print_string "\n";
+    Unix.closedir dh;
+    load()
   | New -> gameType() 
   | Quit -> quit None
   |  _ -> failwith "failed in loadNew"
