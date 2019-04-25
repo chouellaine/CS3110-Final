@@ -1,25 +1,32 @@
+(** 
+   Representation of game state in OCaml and JSON
+
+   This module contains the OCaml representation of game state and functionality 
+   for converting this state to and from JSON format
+*)
+
 open Yojson.Basic.Util
 open Command
 
-(* [color] is the representation of a color of piece in checkers. 
-   [Black] is represented as white on ANSITerminal and [Red] as magenta. *)
+(** [color] is the representation of a color of piece in checkers. 
+    [Black] is represented as white on ANSITerminal and [Red] as magenta. *)
 type color = 
   | Black 
   | Red 
 
-(* [piece] is the representation of a checkers piece. *)
+(** [piece] is the representation of a checkers piece. *)
 type piece = 
   | P of (color * (int * int)) 
   | K of (color * (int * int)) 
 
-(* [player] represents a type of player. [AI of diff] is an AI player of 
-   difficulty [diff], [Player] is a normal, same-computer player, [Host] is the 
-   player hosting the game if the game is being played on multiple computers, 
-   and [Client] is a player who has joined a hosted game. *)
+(** [player] represents a type of player. [AI of diff] is an AI player of 
+    difficulty [diff], [Player] is a normal, same-computer player, [Host] is the 
+    player hosting the game if the game is being played on multiple computers, 
+    and [Client] is a player who has joined a hosted game. *)
 type player = AI of diff | Player | Host | Client
 
-(* [connection] is the representation of connection when playing checkers on 
-   different computers with a host and client. *)
+(** [connection] is the representation of connection when playing checkers on 
+    different computers with a host and client. *)
 type connection = ((Unix.file_descr*Unix.file_descr) list option)*Unix.file_descr
 
 type request = Rematch | Draw  

@@ -1,9 +1,7 @@
 (** 
-   Representation of checkers game state.
+   Functions for working with checkers game state.
 
-   This module represents the state of a checkers game as it is being played,
-   including all of the pieces currrently on the board, their locations,   ,
-   and functions that cause the state to change.
+   This module includes all functions that are related to or modify state. 
 *)
 
 (** [pp_move_lst mv_lst] pretty prints the move list [mv_lst] *)

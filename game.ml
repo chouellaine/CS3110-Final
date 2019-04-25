@@ -135,8 +135,8 @@ let to_json t f_name =
   Yojson.Basic.to_file (f_name^".json") json;
   Unix.chdir ".."
 
-(* [get_pieces t] is the pieces in the game representation [t] *)
+(** [get_pieces t] is the pieces in the game representation [t] *)
 let get_pieces t = t.pieces 
 
-(* [get_pieces t] is the turn in the game representation [t] *)
+(** [get_pieces t] is the turn in the game representation [t] *)
 let get_turn t = t.turn 

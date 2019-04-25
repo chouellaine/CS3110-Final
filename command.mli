@@ -101,7 +101,7 @@ exception Malformed
     - "draw" 
     - "accept" 
     - "reject" 
-    - "move {i}" where {i} is a string with more than one checkerboard 
+    - "move [i]" where [i] is a string with more than one checkerboard 
       coordinate point *)
 val parse : string -> command
 

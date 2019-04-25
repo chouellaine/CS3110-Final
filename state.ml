@@ -84,10 +84,10 @@ let get_normal_moves piece piece_lst =
   | K (_, (x,y)) -> 
     helper (x,y) piece_lst Red @ helper (x,y) piece_lst Black
 
-(* [taken_piece start dest color piece_lst] is [None] if the jump described 
-   by moving the piece at [start] to [dest] with color [color] given the 
-   current list of pieces on the board [piece_lst] is invalid or [Some p] if 
-   the jump is valid where [p] is the piece that was taken *)
+(** [taken_piece start dest color piece_lst] is [None] if the jump described 
+    by moving the piece at [start] to [dest] with color [color] given the 
+    current list of pieces on the board [piece_lst] is invalid or [Some p] if 
+    the jump is valid where [p] is the piece that was taken *)
 let taken_piece start dest color piece_lst = 
   let in_between = ((fst start + fst dest) / 2, (snd start + snd dest)/2) in 
   if in_bounds dest && (piece_at dest piece_lst) = None then 
@@ -96,8 +96,8 @@ let taken_piece start dest color piece_lst =
     | Some piece -> if (get_color piece) <> color then (Some in_between) else None
   else None
 
-(* [get_jump_coords piece piece_lst] is the list of coordinates [piece] can 
-   jump to given the pieces on the board [piece_lst] *)
+(** [get_jump_coords piece piece_lst] is the list of coordinates [piece] can 
+    jump to given the pieces on the board [piece_lst] *)
 let get_jump_coords piece piece_lst = 
   let helper start p_lst color = 
     let ydif = if color = Red then ~-2 else 2 in 
@@ -111,16 +111,16 @@ let get_jump_coords piece piece_lst =
   in
   helper (get_coords piece) piece_lst (get_color piece)
 
-(* [remove_piece_w_coords coords acc p_lst] is [p_lst] and any elements 
-   initially in  [acc]  without the piece with coordinates [coords] *)
+(** [remove_piece_w_coords coords acc p_lst] is [p_lst] and any elements 
+    initially in  [acc]  without the piece with coordinates [coords] *)
 let rec remove_piece_w_coords coords acc = function 
   | [] -> acc
   | h::t when coords = get_coords h -> acc@t
   | h::t -> remove_piece_w_coords coords (h::acc) t
 
-(* [get_jump_moves piece piece_lst] is the list of valid moves involving one or
-   more jumps for a certain piece [piece] and a list of all pieces 
-   on the board [piece_lst] *)
+(** [get_jump_moves piece piece_lst] is the list of valid moves involving one or
+    more jumps for a certain piece [piece] and a list of all pieces 
+    on the board [piece_lst] *)
 let get_jump_moves piece piece_lst = 
   let start_coords = get_coords piece in 
   let rec helper p p_lst curr_path cmp_paths = 

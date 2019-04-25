@@ -34,7 +34,7 @@ let make_parse_test
 let make_move_test
     (name : string)
     (str : string)
-    (st : State.t)
+    (st : Game.t)
     (expected_output : State.result) : test =
   name >:: (fun _ ->
       assert (equal_results expected_output (move st (match parse str with
@@ -42,7 +42,7 @@ let make_move_test
 
 let make_moves_test
     (name : string)
-    (st : State.t)
+    (st : Game.t)
     (expected_output : (int*int) list list) =
   name >:: (fun _ -> 
       assert (cmp_set_like_lists (get_all_moves st) expected_output))
