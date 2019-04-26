@@ -47,6 +47,7 @@ open Game
 
 (* Easy = 3 | Medium = 6 | Hard = 9 | AlphaZero  = 12 *)
 
+let num_spectators = 4
 
 (** [helper_string str] prints [str] with a new line. *)
 let helper_string str =  
@@ -438,8 +439,8 @@ and send_game fd g =
 and host g = 
   helper_string "Starting new game.";
   let fd = socket PF_INET SOCK_STREAM 0 in
-  let conn_fd,sockaddr = listen_accept fd 4 in
-  let f_list = init_spectators fd 4 in
+  let conn_fd,sockaddr = listen_accept fd num_spectators in
+  let f_list = init_spectators fd num_spectators in
   send_game conn_fd g; 
   write_children f_list (game_to_str g);
   host_game f_list conn_fd g

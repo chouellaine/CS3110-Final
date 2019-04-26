@@ -1,6 +1,7 @@
 open OUnit2
 open Command
 open State
+open Game
 
 (** [cmp_set_like_lists lst1 lst2] compares two lists to see whether
     they are equivalent set-like lists.  That means checking two things.
@@ -91,6 +92,7 @@ let command_tests =
   ]
 
 let s1 = {
+  game = Regular;
   pieces = [
     P (Black,(1,1));P (Black,(3,1));P (Black,(5,1));P (Black,(7,1));P (Black,(2,2));
     P (Black,(4,2));P (Black,(6,2));P (Black,(8,2));P (Black,(2,4));P (Black,(3,3));
@@ -100,8 +102,13 @@ let s1 = {
     P (Red,(8,6))
   ];
   turn = 2; 
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 let s2 = {
+  game = Regular;
   pieces = [
     P (Black,(1,1));P (Black,(3,1));P (Black,(5,1));P (Black,(7,1));P (Black,(2,2));
     P (Black,(4,2));P (Black,(6,2));P (Black,(8,2));P (Black,(2,4));P (Black,(3,3));
@@ -111,98 +118,166 @@ let s2 = {
     P (Red,(8,6))
   ];
   turn = 3; 
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let triple = {
+  game = Regular;
   pieces = [
-    P (Red,(4,2));P (Red,(2,4));P (Red,(2,6));P (Black,(5,1))
+    P (Red,(4,2));P (Red,(2,4));P (Red,(2,6));P (Black,(5,1)); P (Red,(8,8))
   ];
   turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let after_triple = {
+  game = Regular;
   pieces = [
-    P (Black,(3,7))
+    P (Black,(3,7));P (Red,(8,8))
   ];
   turn = 2;
-
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let two_legal_OOB = {
+  game = Regular;
   pieces = [
     P (Black,(7,1));P(Red,(8,2))
   ];
   turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let after_OOB = {
+  game = Regular;
   pieces = [
     P (Black,(6,2));P(Red,(8,2))
   ];
-  turn = 2
+  turn = 2;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let illegal_not_king = {
+  game = Regular;
   pieces = [
     P (Black,(1,1));P (Red,(2,2));P (Red,(2,4))
   ];
-  turn = 1
+  turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let king_double = {
+  game = Regular;
   pieces = [
     K (Black,(1,1));P (Red,(2,2));P (Red,(2,4))
   ];
-  turn = 1
+  turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let after_kd = {
+  game = Regular;
   pieces = [
     K (Black,(5,1));
   ];
-  turn = 2
+  turn = 2;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let one_piece_a1 = {
+  game = Regular;
   pieces = [
     P (Black,(1,1))
   ];
-  turn = 1
+  turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let one_piece_d4 = {
+  game = Regular;
   pieces = [
     P (Black,(4,4))
   ];
-  turn = 1
+  turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let one_king_d4 = {
+  game = Regular;
   pieces = [
     K (Black,(4,4))
   ];
-  turn = 1
+  turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let one_piece_one_king = {
+  game = Regular;
   pieces = [
     K (Black,(4,4)); P (Black,(2,4))
   ];
-  turn = 1
+  turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let multiple_jumps = {
+  game = Regular;
   pieces = [
     P (Black,(4,4)); P (Red,(5,5)); P(Red, (3,5))
   ];
-  turn = 1
+  turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let two_pieces_jumps = {
+  game = Regular;
   pieces = [
     P (Black,(4,2)); P (Black,(6,2)); P(Red, (3,3)); P(Red, (5,3))
   ];
-  turn = 1
+  turn = 1;
+  moves_without_capture = 0;
+  opp = Player;
+  connection = None;
+  request = None;
 }
 
 let move_tests =
