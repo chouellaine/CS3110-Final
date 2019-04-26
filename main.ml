@@ -198,8 +198,16 @@ and recv_move st =
 (**  [send_move st m msg] sends [msg] encoding move [m] to the opponent of [st]. *)
 and send_move st m msg = 
   match move st m with 
-  | Legal st' -> update_spec st' msg; print_board st'.pieces; 
-    send_msg st' msg; recv_move st'
+  | Legal st' -> update_spec st' msg; send_msg st' msg; print_board st'.pieces;
+    begin match check_win st' with 
+      | Win (st',c) when c = Black -> 
+        helper_string "Game Over. Black Wins!"; game_over_network st'
+      | Win (st',c) when c = Red -> 
+        helper_string "Game Over. Red Wins!"; game_over_network st'
+      | Win _ -> failwith "BUG in send_move, Win match!"
+      | Legal t -> recv_move st'
+      | Illegal -> failwith "failed in send_move, user made illegal move"
+    end 
   | Illegal -> helper_string "Illegal move. Try again.\n>"; play_network st 
   | _ -> failwith "failed in send_move"
 
@@ -208,7 +216,16 @@ and send_move st m msg =
      the game state appropriately. *)
 and resp_move st m msg = 
   match move st m with 
-  | Legal st' -> update_spec st' msg; print_board st'.pieces; play_network st'
+  | Legal st' -> update_spec st' msg; print_board st'.pieces; 
+    begin match check_win st' with 
+      | Win (st',c) when c = Black -> 
+        helper_string "Game Over. Black Wins!"; game_over_network st'
+      | Win (st',c) when c = Red -> 
+        helper_string "Game Over. Red Wins!"; game_over_network st'
+      | Win _ -> failwith "BUG in resp_move, Win match!"
+      | Legal t -> play_network st'
+      | Illegal -> failwith "failed in resp_move, user made illegal move"
+    end 
   | Illegal -> failwith "Opp sent an illegal move in resp_move"
   | _ -> failwith "failed in resp_move"
 
