@@ -196,7 +196,7 @@ let illegal_not_king = {
 let king_double = {
   game = Regular;
   pieces = [
-    K (Red,(1,1));P (Black,(2,2));P (Black,(2,4))
+    K (Red,(1,1));P (Black,(2,2));P (Black,(4,2))
   ];
   turn = 2;
   moves_without_capture = 11;

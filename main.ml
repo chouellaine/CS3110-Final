@@ -329,7 +329,7 @@ and move_local st m =
         begin 
           match check_win st'' with 
           | Win (st',c) when c = Black -> print_board st'.pieces;
-            helper_string "Game Over. Black Wins!"; game_over st
+            helper_string "Game Over. White Wins!"; game_over st
           | Win (st',c) when c = Red -> print_board st'.pieces;
             helper_string "Game Over. Red Wins!"; game_over st
           | Win _ -> failwith "BUG in playGame, Win match!"
@@ -340,7 +340,7 @@ and move_local st m =
     end 
   | Illegal -> helper_string "Illegal move. Try again.\n>";  play_local st 
   | Win (st',c) when c = Black -> print_board st'.pieces;
-    helper_string "Game Over. Black Wins!"; game_over st
+    helper_string "Game Over. White Wins!"; game_over st
   | Win (st',c) when c = Red -> print_board st'.pieces;
     helper_string "Game Over. Red Wins!"; game_over st
   | Win _ -> failwith "BUG in playGame, Win match!"

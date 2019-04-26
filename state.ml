@@ -227,7 +227,7 @@ let update_state st mv =
 
 let check_win st = 
   match get_all_moves st with 
-  | [] ->  let color = (st.turn mod 2 = 0) in begin match st.game with 
+  | [] ->  let color = (st.turn mod 2 = 1) in begin match st.game with 
       | Suicide ->if color then Win (st,Black) else Win (st, Red)
       | Regular ->if color then Win (st,Red) else Win (st,Black) end
   | x -> Legal st 
