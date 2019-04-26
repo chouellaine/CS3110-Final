@@ -117,7 +117,8 @@ let read_cmd = function
   | h :: [] when String.lowercase_ascii h = "board" -> Board
   | h :: [] when String.lowercase_ascii h = "move" -> raise Malformed 
   | h :: _ :: [] when String.lowercase_ascii h = "move" -> raise Malformed
-  | h :: t  when String.lowercase_ascii h = "move" -> Move (List.map convert_coord t)
+  | h :: t  when String.lowercase_ascii h = "move" -> 
+    Move (List.map convert_coord t)
   | h :: [] when String.lowercase_ascii h = "rematch" -> Rematch
   | h :: t :: [] when String.lowercase_ascii h = "new" 
                    && String.lowercase_ascii t = "game" ->  New

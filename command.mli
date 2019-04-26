@@ -5,8 +5,9 @@
 (** The type [action] is the series of moves the player requests to make, where
     the first element is the coordinate of the piece to be moved. 
     Each element of [action] is formatted under the coordinate system of 
-    the checkerboard where the bottom-left corner of the board is the origin (1,1),
-    and goes from 1 to 8 from left to right and bottom to top of the board. 
+    the checkerboard where the bottom-left corner of the board is the origin 
+    (1,1), and goes from 1 to 8 from left to right and bottom to top of the 
+    board. 
     Ex: 
     bottom-right corner is (8,1),
     top-left corner is (1,8), 

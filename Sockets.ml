@@ -52,9 +52,11 @@ let ip_port_disp () =
       begin
         match code2 with
         | WEXITED 0 -> ()
-        | _ -> print_string "We couldn't find your IP Address. You will have to find it manually.\n";
+        | _ -> 
+          print_string "We couldn't find your IP Address. You must find it manually.\n";
       end
-    | _ -> print_string "We couldn't find your IP Address. You will have to find it manually.\n";
+    | _ -> 
+      print_string "We couldn't find your IP Address. You must it manually.\n";
   end
 
 let listen_same fd num =
@@ -75,7 +77,8 @@ let conn_client fd =
   print_string "\nPlease enter the port number to connect to on your opponent's machine:\n";
   let port = read_line () in
   let conn_addr = ADDR_INET(inet_addr_of_string ip,int_of_string port) in
-  (connect fd conn_addr;print_board (new_game ()).pieces; Pervasives.print_newline ())
+  (connect fd conn_addr;print_board (new_game ()).pieces; 
+   Pervasives.print_newline ())
 
 let conn_spec fd = 
   print_string "\nPlease wait for the game you would like to spectate to start before connecting to the host.\n\n";
@@ -84,7 +87,8 @@ let conn_spec fd =
   print_string "\nEnter the port number to connect to:\n";
   let port = read_line () in
   let conn_addr = ADDR_INET(inet_addr_of_string ip,int_of_string port) in
-  connect fd conn_addr; print_board (new_game ()).pieces; Pervasives.print_newline ()
+  connect fd conn_addr; print_board (new_game ()).pieces; 
+  Pervasives.print_newline ()
 
 let init_spectators fd num =
   let rec fork_list num acc = 
@@ -98,7 +102,8 @@ let init_spectators fd num =
       let bs = Bytes.create 64 in
       let bytes_read = read (fst iofd) bs 0 64 in
       let sent = send conn_fd bs 0 bytes_read [] in
-      if sent < bytes_read then (print_string "The whole command did not send. There is probably a bug")
+      if sent < bytes_read then 
+        (print_string "The whole command did not send. There is probably a bug")
       else ()
     done
   in

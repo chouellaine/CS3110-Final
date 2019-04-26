@@ -11,7 +11,8 @@ type piece =
 
 type player = AI of diff | Player | Host | Client
 
-type connection = ((Unix.file_descr*Unix.file_descr) list option) * Unix.file_descr
+type connection = 
+  ((Unix.file_descr * Unix.file_descr) list option) * Unix.file_descr
 
 type request = Rematch | Draw  
 
@@ -22,7 +23,7 @@ type t = {
   moves_without_capture: int; 
   opp: player; 
   connection: connection option; 
-  request: (player*request) option;
+  request: (player * request) option;
 }
 
 (** [UnknownMove] is raised when a malformed coordinate is detected *)
@@ -62,14 +63,14 @@ let to_coord color king c =
 let piece_of_json color c =  
   let kings = c |> member "kings" |> to_list |>  List.map (to_coord color true) in 
   let pieces = c |> member "pieces" |> to_list |> List.map (to_coord color false) in 
-  kings@pieces 
+  (kings @ pieces)
 
 let from_json json = 
   let red = json |> member "red" |> piece_of_json Red in 
   let black = json |> member "black" |> piece_of_json Black in 
   {
     game = json|> member "game" |> to_string |> to_game_type;
-    pieces = red@black |> set_from_list;
+    pieces = (red @ black) |> set_from_list;
     turn = json |> member "turn" |> to_int;
     moves_without_capture = json|>member "moves"|>to_int;
     opp = json |> member "opp" |> to_string |> to_player;

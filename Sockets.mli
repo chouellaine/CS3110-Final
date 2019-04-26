@@ -37,7 +37,8 @@ val conn_spec : Unix.file_descr -> unit
     subsequent moves as they happen. A pipe is used to communicate between the
     parent and listening child processes, and a list of both ends of each pipe
     is returned. *)
-val init_spectators : Unix.file_descr -> int -> (Unix.file_descr * Unix.file_descr) list
+val init_spectators : Unix.file_descr -> int -> 
+  (Unix.file_descr * Unix.file_descr) list
 
 (** [write_children fds s] writes [string] to each output file descriptor of
     [fds]. *)
