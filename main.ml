@@ -201,7 +201,7 @@ and send_move st m msg =
   | Legal st' -> update_spec st' msg; send_msg st' msg; print_board st'.pieces;
     begin match check_win st' with 
       | Win (st',c) when c = Black -> 
-        helper_string "Game Over. Black Wins!"; game_over_network st'
+        helper_string "Game Over. White Wins!"; game_over_network st'
       | Win (st',c) when c = Red -> 
         helper_string "Game Over. Red Wins!"; game_over_network st'
       | Win _ -> failwith "BUG in send_move, Win match!"
