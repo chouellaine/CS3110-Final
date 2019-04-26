@@ -47,7 +47,6 @@ open Game
 
 (* Easy = 3 | Medium = 6 | Hard = 9 | AlphaZero  = 12 *)
 
-let num_spectators = 4
 
 (** [helper_string str] prints [str] with a new line. *)
 let helper_string str =  
@@ -165,8 +164,7 @@ let rec play_network st =
     | Save -> helper_string "What do you want to name your save file?";
       save st (read_line ()); play_network st;
     | Move m -> send_move st m str
-    | Rematch -> helper_string "Must request a draw before rematching."; 
-      play_network st
+    | Rematch -> helper_string "Must request a draw before rematching."; play_network st
     | exception Malformed -> invalid_str None; play_network st
     | exception Empty -> empty_str(); play_network st
     | Opponent _ | Start | Watch | Level _ | No  | Accept | Reject
@@ -208,8 +206,7 @@ and match_request st r =
   let p = get_player st in  
   let st' = {st with request = None} in 
   match st.request,r with 
-  | None, _ -> 
-    failwith "received invalid command from opponent in match_request"
+  | None, _ -> failwith "received invalid command from opponent in match_request"
   | Some (a, Draw), Accept when a=p -> helper_string "Draw Accepted"; 
     game_over_network st';
   | Some (a, Draw), Reject when a=p-> helper_string "Draw Rejected";
@@ -241,8 +238,7 @@ and send_req st req =
 and resp_req st req = 
   let p = get_player st in  
   match st.request with 
-  | None -> let st' = {st with request = Some (st.opp,req)} in 
-    accept_reject st' req
+  | None -> let st' = {st with request = Some (st.opp,req)} in accept_reject st' req
   | Some (a,Rematch) when a = p && req = Rematch ->  
     helper_string "Rematch Accepted"; new_network_game st
   | Some (a,Draw) when a = p && req = Draw -> 
@@ -365,8 +361,7 @@ and draw st =
     menu_str(" Your opponent offers a draw.") ["Accept";"Reject"];
     match (matchCommand [Accept; Reject]) with 
     | Accept -> helper_string "Draw Accepted"; game_over st 
-    | Reject -> helper_string"Draw Rejected. It is still your turn.";
-      play_local st 
+    | Reject -> helper_string"Draw Rejected. It is still your turn."; play_local st 
     | _ -> failwith "failed in draw"
 
 and force_draw st f= 
@@ -439,8 +434,8 @@ and send_game fd g =
 and host g = 
   helper_string "Starting new game.";
   let fd = socket PF_INET SOCK_STREAM 0 in
-  let conn_fd,sockaddr = listen_accept fd num_spectators in
-  let f_list = init_spectators fd num_spectators in
+  let conn_fd,sockaddr = listen_accept fd 4 in
+  let f_list = init_spectators fd 4 in
   send_game conn_fd g; 
   write_children f_list (game_to_str g);
   host_game f_list conn_fd g
@@ -488,8 +483,7 @@ and host_client g =
 
 (** [machine_env ()] selects the game environment *)
 and machine_env g = 
-  menu_str " Do you want to play on the same or different machines?" 
-    ["Same";"Different"];
+  menu_str" Do you want to play on the same or different machines?" ["Same";"Different"];
   match (matchCommand [Env Same; Env Different;Quit]) with 
   | Env a -> 
     begin
@@ -503,9 +497,7 @@ and machine_env g =
 (** [game_level ()] selects the ai difficulty *)
 and game_level g  = 
   menu_str " Choose an AI difficulty: " ["Easy";"Medium";"Hard";"AlphaZero"];
-  let mc = 
-    matchCommand [Level Easy; Level Medium; Level Hard; Level AlphaZero] in
-  match mc with 
+  match (matchCommand [ Level Easy; Level Medium; Level Hard; Level AlphaZero]) with 
   | Level a -> play_ai a g
   | Quit -> quit None
   | _ -> failwith "failed in game_level"
@@ -513,7 +505,7 @@ and game_level g  =
 (** [player_ai ()] selects the opponent type *)
 and player_ai g = 
   menu_str " Player vs Player or Player vs AI?" ["Player";"AI"];
-  match (matchCommand [Opponent Player; Opponent AI; Quit ]) with 
+  match (matchCommand [ Opponent Player; Opponent AI ; Quit ]) with 
   | Opponent a -> 
     begin
       match a with
@@ -526,7 +518,7 @@ and player_ai g =
 (** [game_type ()] selects the game type based on user input *)
 and game_type() = 
   menu_str " Suicide Checkers or Regular Checkers?" ["Suicide";"Regular"];
-  match (matchCommand [GameType Suicide; GameType Regular; Quit ]) with 
+  match (matchCommand [ GameType Suicide; GameType Regular ; Quit ]) with 
   | GameType g -> player_ai g
   | Quit -> quit None
   | _ -> failwith "failed in gameType"
@@ -534,7 +526,7 @@ and game_type() =
 (** [load_new ()] loads a saved game or begins a new one *)
 and load_new() = 
   menu_str " Load Game or New Game?" ["Load Game";"New Game"];
-  match (matchCommand [ Load; New; Quit ]) with 
+  match (matchCommand [ Load; New ; Quit ]) with 
   | Load ->  helper_string "Enter game file to load:"; 
     let rec list_files dh =
       begin
@@ -557,7 +549,7 @@ and load_new() =
     responds accordingly *)
 and play_watch() = 
   menu_str " Do you want to play a game or watch a game?" ["Play";"Watch"];
-  match (matchCommand [ Play; Watch; Quit]) with 
+  match (matchCommand [ Play; Watch ; Quit]) with 
   | Play -> load_new() 
   | Watch -> spectator()
   | Quit -> quit None
