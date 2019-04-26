@@ -83,8 +83,24 @@ let command_tests =
         assert_raises (Malformed) (fun () -> parse "move i1 to b3"));
     "move multi end to" >:: (fun _ ->
         assert_raises (Malformed) (fun () -> parse "move a1 to b3 to c2 to"));
-    "quit with extra" >:: (fun _ ->
-        assert_raises (Malformed) (fun () -> parse "quit butt"));
+    "just new" >:: (fun _ ->
+        assert_raises (Malformed) (fun () -> parse "load"));
+    "just save" >:: (fun _ ->
+        assert_raises (Malformed) (fun () -> parse "save"));
+    "just load" >:: (fun _ ->
+        assert_raises (Malformed) (fun () -> parse "load"));
+    "save garb" >:: (fun _ ->
+        assert_raises (Malformed) (fun () -> parse "save garb"));
+    "load garb" >:: (fun _ ->
+        assert_raises (Malformed) (fun () -> parse "load garb sharkeisha"));
+    "board garb" >:: (fun _ ->
+        assert_raises (Malformed) (fun () -> parse "board garb"));
+    "rematch garb" >:: (fun _ ->
+        assert_raises (Malformed) (fun () -> parse "rematch garb"));
+    "restart garb" >:: (fun _ ->
+        assert_raises (Malformed) (fun () -> parse "restart garb"));
+
+
 
     make_parse_test "move 1" "move a1 to b3" (Move [(1,1);(2,3)]);
     make_parse_test "move extra spaces" "  move  a1  to   b3  " (Move [(1,1);(2,3)]);
@@ -98,6 +114,17 @@ let command_tests =
     make_parse_test "ai" "ai" (Opponent AI);
     make_parse_test "ai caps" "AI" (Opponent AI);
     make_parse_test "rematch" "rematch" Rematch;
+    make_parse_test "new game" "new game" New;
+    make_parse_test "load game" "load game" Load;
+    make_parse_test "save game" "save game" Save;
+    make_parse_test "rematch" "rematch" Rematch;
+    make_parse_test "restart" "restart" StartOver;
+    make_parse_test "regular" "regular" (GameType Regular);
+    make_parse_test "suicide" "suicide" (GameType Suicide);
+    make_parse_test "yes" "yes" Yes;
+    make_parse_test "no" "no" No;
+    make_parse_test "score" "score" Score;
+    make_parse_test "board" "board" Board;
   ]
 
 let s1 = {
@@ -156,6 +183,10 @@ let after_triple = {
   connection = None;
   request = None;
 }
+
+let triple_rwin = {triple with game = Suicide}
+
+let after_triple_rwin = {after_triple with game = Suicide}
 
 let two_legal_OOB = {
   game = Regular;
@@ -229,61 +260,47 @@ let one_piece_a1 = {
   request = None;
 }
 
-let one_piece_d4 = {
-  game = Regular;
-  pieces = [
-    P (Black,(4,4));
-  ];
-  turn = 1;
-  moves_without_capture = 0;
-  opp = Player;
-  connection = None;
-  request = None;
-}
+let one_piece_d4 = {one_piece_a1 with
+                    pieces = [
+                      P (Black,(4,4));
+                    ];
+                   }
 
-let one_king_d4 = {
-  game = Regular;
-  pieces = [
-    K (Black,(4,4));
-  ];
-  turn = 1;
-  moves_without_capture = 0;
-  opp = Player;
-  connection = None;
-  request = None;
-}
+let one_king_d4 = {one_piece_d4 with
+                   pieces = [
+                     K (Black,(4,4));
+                   ];
+                  }
 
-let one_piece_one_king = {
-  game = Regular;
-  pieces = [
-    K (Black,(4,4)); P (Black,(2,4)); 
-  ];
-  turn = 1;
-  moves_without_capture = 0;
-  opp = Player;
-  connection = None;
-  request = None;
-}
+let one_piece_one_king = {one_king_d4 with
+                          pieces = [
+                            K (Black,(4,4)); P (Black,(2,4)); 
+                          ];
+                         }
 
-let multiple_jumps = {
-  game = Regular;
-  pieces = [
-    P (Black,(4,4)); P (Red,(5,5)); P(Red, (3,5));
-  ];
-  turn = 1;
-  moves_without_capture = 0;
-  opp = Player;
-  connection = None;
-  request = None;
-}
+let multiple_jumps = {one_king_d4 with
+                      pieces = [
+                        P (Black,(4,4)); P (Red,(5,5)); P(Red, (3,5));
+                      ];
+                      turn = 1;
+                     }
 
-let two_pieces_jumps = {
+let two_pieces_jumps = 
+  { multiple_jumps with
+    pieces = [P (Black,(4,2)); P (Black,(6,2)); P(Red, (3,3)); P(Red, (5,3));]
+  }
+
+let promote = {multiple_jumps with pieces = [
+    P (Black,(7,7)); P (Red,(5,5));
+  ]}
+
+let after_promote = {
   game = Regular;
   pieces = [
-    P (Black,(4,2)); P (Black,(6,2)); P(Red, (3,3)); P(Red, (5,3));
+    K (Black,(8,8)); P (Red,(5,5));
   ];
-  turn = 1;
-  moves_without_capture = 0;
+  turn = 2;
+  moves_without_capture = 1;
   opp = Player;
   connection = None;
   request = None;
@@ -295,12 +312,14 @@ let move_tests =
     make_move_test "start illegal" "move a3 to c5" (new_game ()) Illegal;
     make_move_test "start wrong side illegal" "move d6 to e5" (new_game ()) (Illegal);
     make_move_test "start wrong side illegal" "move d6 to e5" s1 (Legal s2);
-    make_move_test "triple jump" "move e1 to c3 to a5 to c7" triple (Win (after_triple,Black));
+    make_move_test "triple jump win black" "move e1 to c3 to a5 to c7" triple (Win (after_triple,Black));
+    make_move_test "triple jump win red suicide" "move e1 to c3 to a5 to c7" triple_rwin (Win (after_triple_rwin,Red));
     make_move_test "compulsory jump" "move e1 to f2" triple Illegal;
     make_move_test "legal because OOB" "move g1 to f2" two_legal_OOB (Legal after_OOB);
     make_move_test "jump own piece illegal" "move d2 to b4" (new_game ()) Illegal;
     make_move_test "not king double jump" "move a1 to c3 to e1" illegal_not_king (Illegal);
-    make_move_test "king double jump" "move a1 to c3 to e1" king_double (Win (after_kd,Red));
+    make_move_test "king double jump win red" "move a1 to c3 to e1" king_double (Win (after_kd,Red));
+    make_move_test "promote" "move g7 to h8" promote (Legal after_promote); 
   ]
 
 let moves_tests =
