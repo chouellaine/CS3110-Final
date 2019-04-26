@@ -47,7 +47,6 @@ open Game
 
 (* Easy = 3 | Medium = 6 | Hard = 9 | AlphaZero  = 12 *)
 
-let num_spectators = 4
 
 (** [helper_string str] prints [str] with a new line. *)
 let helper_string str =  
@@ -169,8 +168,7 @@ let rec play_network st =
     | Save -> helper_string "What do you want to name your save file?";
       save st (read_line ()); play_network st;
     | Move m -> send_move st m str
-    | Rematch -> helper_string "Must request a draw before rematching."; 
-      play_network st
+    | Rematch -> helper_string "Must request a draw before rematching."; play_network st
     | exception Malformed -> invalid_str None; play_network st
     | exception Empty -> empty_str (); play_network st
     | Opponent _ | Start | Watch | Level _ | No  | Accept | Reject
@@ -237,8 +235,7 @@ and match_request st r =
   let p = get_player st in  
   let st' = {st with request = None} in 
   match st.request,r with 
-  | None, _ -> 
-    failwith "received invalid command from opponent in match_request"
+  | None, _ -> failwith "received invalid command from opponent in match_request"
   | Some (a, Draw), Accept when a=p -> helper_string "Draw Accepted"; 
     game_over_network st';
   | Some (a, Draw), Reject when a=p-> helper_string "Draw Rejected";
@@ -274,8 +271,7 @@ and send_req st req =
 and resp_req st req = 
   let p = get_player st in  
   match st.request with 
-  | None -> let st' = {st with request = Some (st.opp,req)} in 
-    accept_reject st' req
+  | None -> let st' = {st with request = Some (st.opp,req)} in accept_reject st' req
   | Some (a,Rematch) when a = p && req = Rematch ->  
     helper_string "Rematch Accepted"; new_network_game st
   | Some (a,Draw) when a = p && req = Draw -> 
@@ -409,8 +405,7 @@ and draw st =
     menu_str(" Your opponent offers a draw.") ["Accept";"Reject"];
     match (match_cmd [Accept; Reject]) with 
     | Accept -> helper_string "Draw Accepted"; game_over st 
-    | Reject -> helper_string"Draw Rejected. It is still your turn.";
-      play_local st 
+    | Reject -> helper_string"Draw Rejected. It is still your turn."; play_local st 
     | _ -> failwith "failed in draw"
 
 (**  [force_draw st f] forces game to draw when 40 moves have been 
@@ -495,8 +490,8 @@ and send_game fd g =
 and host g = 
   helper_string "Starting new game.";
   let fd = socket PF_INET SOCK_STREAM 0 in
-  let conn_fd,sockaddr = listen_accept fd num_spectators in
-  let f_list = init_spectators fd num_spectators in
+  let conn_fd,sockaddr = listen_accept fd 4 in
+  let f_list = init_spectators fd 4 in
   send_game conn_fd g; 
   write_children f_list (game_to_str g);
   host_game f_list conn_fd g

@@ -18,12 +18,21 @@ let cmp_set_like_lists lst1 lst2 =
   uniq1 = uniq2
 
 let equal_results r1 r2 =
-  if r1 = Illegal && r2 = Illegal then true 
-  else
-    let s1 = match r1 with | Legal s1 -> s1 | _ -> failwith "not legal" in 
-    let s2 = match r2 with | Legal s2 -> s2 | _ -> failwith "not legal" in
-    if (cmp_set_like_lists s1.pieces s2.pieces) && (s1.turn = s2.turn) then true
+  match r1,r2 with
+  | Illegal, Illegal -> true
+  | Legal s1, Legal s2->
+    if (cmp_set_like_lists s1.pieces s2.pieces) && (s1.turn = s2.turn)
+       && (s1.game = s2.game) && (s1.moves_without_capture = s2.moves_without_capture)
+       && (s1.opp = s2.opp) && (s1.connection = s2.connection) 
+       && (s1.request = s2.request) then true
     else false
+  | Win (s1,c1), Win(s2,c2) ->
+    if (cmp_set_like_lists s1.pieces s2.pieces) && (s1.turn = s2.turn)
+       && (s1.game = s2.game) && (s1.moves_without_capture = s2.moves_without_capture)
+       && (s1.opp = s2.opp) && (s1.connection = s2.connection) 
+       && (s1.request = s2.request) && c1 = c2 then true
+    else false
+  | _ -> false
 
 let make_parse_test 
     (name : string) 
@@ -102,7 +111,7 @@ let s1 = {
     P (Red,(8,6))
   ];
   turn = 2; 
-  moves_without_capture = 0;
+  moves_without_capture = 1;
   opp = Player;
   connection = None;
   request = None;
@@ -118,7 +127,7 @@ let s2 = {
     P (Red,(8,6))
   ];
   turn = 3; 
-  moves_without_capture = 0;
+  moves_without_capture = 2;
   opp = Player;
   connection = None;
   request = None;
@@ -127,10 +136,10 @@ let s2 = {
 let triple = {
   game = Regular;
   pieces = [
-    P (Red,(4,2));P (Red,(2,4));P (Red,(2,6));P (Black,(5,1)); P (Red,(8,8))
+    P (Red,(4,2));P (Red,(2,4));P (Red,(2,6));P (Black,(5,1));
   ];
   turn = 1;
-  moves_without_capture = 0;
+  moves_without_capture = 32;
   opp = Player;
   connection = None;
   request = None;
@@ -139,7 +148,7 @@ let triple = {
 let after_triple = {
   game = Regular;
   pieces = [
-    P (Black,(3,7));P (Red,(8,8))
+    P (Black,(3,7));
   ];
   turn = 2;
   moves_without_capture = 0;
@@ -166,7 +175,7 @@ let after_OOB = {
     P (Black,(6,2));P(Red,(8,2))
   ];
   turn = 2;
-  moves_without_capture = 0;
+  moves_without_capture = 1;
   opp = Player;
   connection = None;
   request = None;
@@ -187,10 +196,10 @@ let illegal_not_king = {
 let king_double = {
   game = Regular;
   pieces = [
-    K (Black,(1,1));P (Red,(2,2));P (Red,(2,4))
+    K (Red,(1,1));P (Black,(2,2));P (Black,(2,4))
   ];
-  turn = 1;
-  moves_without_capture = 0;
+  turn = 2;
+  moves_without_capture = 11;
   opp = Player;
   connection = None;
   request = None;
@@ -199,9 +208,9 @@ let king_double = {
 let after_kd = {
   game = Regular;
   pieces = [
-    K (Black,(5,1));
+    K (Red,(5,1));
   ];
-  turn = 2;
+  turn = 3;
   moves_without_capture = 0;
   opp = Player;
   connection = None;
@@ -223,7 +232,7 @@ let one_piece_a1 = {
 let one_piece_d4 = {
   game = Regular;
   pieces = [
-    P (Black,(4,4))
+    P (Black,(4,4));
   ];
   turn = 1;
   moves_without_capture = 0;
@@ -235,7 +244,7 @@ let one_piece_d4 = {
 let one_king_d4 = {
   game = Regular;
   pieces = [
-    K (Black,(4,4))
+    K (Black,(4,4));
   ];
   turn = 1;
   moves_without_capture = 0;
@@ -247,7 +256,7 @@ let one_king_d4 = {
 let one_piece_one_king = {
   game = Regular;
   pieces = [
-    K (Black,(4,4)); P (Black,(2,4))
+    K (Black,(4,4)); P (Black,(2,4)); 
   ];
   turn = 1;
   moves_without_capture = 0;
@@ -259,7 +268,7 @@ let one_piece_one_king = {
 let multiple_jumps = {
   game = Regular;
   pieces = [
-    P (Black,(4,4)); P (Red,(5,5)); P(Red, (3,5))
+    P (Black,(4,4)); P (Red,(5,5)); P(Red, (3,5));
   ];
   turn = 1;
   moves_without_capture = 0;
@@ -271,7 +280,7 @@ let multiple_jumps = {
 let two_pieces_jumps = {
   game = Regular;
   pieces = [
-    P (Black,(4,2)); P (Black,(6,2)); P(Red, (3,3)); P(Red, (5,3))
+    P (Black,(4,2)); P (Black,(6,2)); P(Red, (3,3)); P(Red, (5,3));
   ];
   turn = 1;
   moves_without_capture = 0;
@@ -286,11 +295,12 @@ let move_tests =
     make_move_test "start illegal" "move a3 to c5" (new_game ()) Illegal;
     make_move_test "start wrong side illegal" "move d6 to e5" (new_game ()) (Illegal);
     make_move_test "start wrong side illegal" "move d6 to e5" s1 (Legal s2);
-    make_move_test "triple jump" "move e1 to c3 to a5 to c7" triple (Legal after_triple);
+    make_move_test "triple jump" "move e1 to c3 to a5 to c7" triple (Win (after_triple,Black));
     make_move_test "compulsory jump" "move e1 to f2" triple Illegal;
     make_move_test "legal because OOB" "move g1 to f2" two_legal_OOB (Legal after_OOB);
     make_move_test "jump own piece illegal" "move d2 to b4" (new_game ()) Illegal;
-    make_move_test "king double jump" "move a1 to c3 to e1" illegal_not_king (Illegal);
+    make_move_test "not king double jump" "move a1 to c3 to e1" illegal_not_king (Illegal);
+    make_move_test "king double jump" "move a1 to c3 to e1" king_double (Win (after_kd,Red));
   ]
 
 let moves_tests =
