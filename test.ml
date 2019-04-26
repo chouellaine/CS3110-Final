@@ -57,6 +57,20 @@ let make_moves_test
   name >:: (fun _ -> 
       assert (cmp_set_like_lists (get_all_moves st) expected_output))
 
+let make_eval_test
+    (name : string)
+    (st : Game.t)
+    (expected_output : float) =
+  name >:: (fun _ -> 
+      assert_equal (get_eval st) expected_output)
+
+let make_seval_test
+    (name : string)
+    (st : Game.t)
+    (expected_output : float) =
+  name >:: (fun _ -> 
+      assert_equal (get_eval_suicide st) expected_output)
+
 
 
 let command_tests =
@@ -260,6 +274,34 @@ let one_piece_a1 = {
   request = None;
 }
 
+let one_red_a1 = {
+  one_piece_a1 with pieces = [
+    P (Red,(1,1))
+  ];
+}
+
+let one_each = {
+  one_piece_a1 with pieces = [
+    P (Red,(1,1));P (Black,(3,1))
+  ];
+}
+
+let king_difference = {
+  one_piece_a1 with pieces = [
+    P (Red,(1,1));P (Black,(3,1)); K (Black,(5,1));
+  ];
+}
+
+let king_and_piece_difference = {
+  one_piece_a1 with pieces = [
+    P (Red,(1,1));P (Black,(3,1)); K (Black,(5,1)); P (Black,(7,1))
+  ];
+}
+
+let king_difference = {
+  king_difference with turn = 2;
+}
+
 let one_piece_d4 = {one_piece_a1 with
                     pieces = [
                       P (Black,(4,4));
@@ -335,11 +377,26 @@ let moves_tests =
       [[(4,2);(2,4)];[(4,2);(6,4)];[(6,2);(4,4)]]
   ]
 
+let eval_tests = 
+  [
+    make_eval_test "one black p" one_piece_d4 (3.);
+    make_eval_test "one red p" one_red_a1 (-3.);
+    make_eval_test "one each" one_each 0.;
+    make_eval_test "king difference" king_difference 5.;
+    make_eval_test "king and piece difference" king_and_piece_difference 8.;
+    make_seval_test "s one black p" one_piece_d4 (-3.);
+    make_seval_test "s one red p" one_red_a1 (3.);
+    make_seval_test "s one each" one_each 0.;
+    make_seval_test "s king_difference" king_difference (-5.);
+    make_seval_test "s king and piece difference" king_and_piece_difference (-8.);
+  ]
+
 let suite =
   "test suite for checkers"  >::: List.flatten [
     command_tests;
     move_tests;
     moves_tests;
+    eval_tests;
   ]
 
 let _ = run_test_tt_main suite

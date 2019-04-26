@@ -20,7 +20,7 @@ play:
 	$(OCAMLBUILD) $(MAIN) && ./$(MAIN)
 
 zip:
-	zip checkers.zip *.ml* _tags Makefile
+	zip checkers.zip *.ml* _tags Makefile save
 
 docs: docs-public docs-private
 
